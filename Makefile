@@ -1,5 +1,15 @@
+PYCACH_FILES = $$(find . -type d -name "__pycache__")
+MYPY_FILES =  $$(find . -type d -name ".mypy_cache")
 
-
+install:
+	uv sync
 
 run:
 	uv run fly_in.py
+
+debug:
+	uv run -m pdb fly_in.py
+
+
+clean:
+	rm -rf $(PYCACH_FILES) $(MYPY_FILES)

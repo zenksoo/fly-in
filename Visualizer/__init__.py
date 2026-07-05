@@ -1,4 +1,4 @@
-from .Visualizer import Canvas
+from .Visualizer import Canvas, MlxWindow, WindowCFG
 
 
-__all__ = ["Canvas"]
+__all__ = ["Canvas", "MlxWindow", "WindowCFG"]
