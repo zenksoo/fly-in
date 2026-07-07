@@ -8,7 +8,7 @@ from Visualizer import Canvas, MlxWindow, WindowCFG
 
 
 def main():
-    with open("config.toml", 'rb') as f:
+    with open("./Configs/window.toml", 'rb') as f:
         config = tomllib.load(f)
 
     wcfg = WindowCFG(**config["window"])
