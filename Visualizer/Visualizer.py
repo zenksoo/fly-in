@@ -1,7 +1,7 @@
 import numpy as np
 from MLX.libmlx import *
 from PIL import Image
-from utils import pack_rgba, HexColor_to_decimal
+from Utils import pack_rgba, HexColor_to_decimal
 from typing import Optional
 from pydantic import BaseModel, model_validator, Field, ValidationError
 
