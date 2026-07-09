@@ -6,6 +6,7 @@ from PIL import Image
 from typing import Tuple
 from Visualizer import Canvas, MlxWindow, WindowCFG
 from Parser import MapParser
+from CExeptions import MapParserError
 
 def main():
     # with open("./Configs/window.toml", 'rb') as f:
@@ -19,9 +20,10 @@ def main():
     # mlx.mlx_loop(mlx_window.mlx_ptr)
 
 
-    map = MapParser("maps/easy/01_linear_path.txt")
-
-    map = map.parse()
+    try:
+        map = MapParser.parse(33)
+    except MapParserError as e:
+        print(e)
 
 
 
