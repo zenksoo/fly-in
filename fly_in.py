@@ -21,9 +21,9 @@ def main():
 
 
     try:
-        map = MapParser.parse(33)
+        map = MapParser.parse('maps/easy/03_basic_capacity.txt')
     except MapParserError as e:
-        print(e)
+        print(e.render_error())
 
 
 

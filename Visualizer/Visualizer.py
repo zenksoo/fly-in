@@ -75,7 +75,7 @@ class MlxWindow:
         Canvas._fill_image_by_static_color(MlxWindow.bg_img, bg_color)
 
     def init_window(self, title: bytes) -> None:
-        MlxWindow.mlx_ptr = mlx.mlx_init(self.width, self.height, title, True)
+        MlxWindow.mlx_ptr = mlx.mlx_init(self.width, self.height, title, False)
         MlxWindow.bg_img = mlx.mlx_new_image(self.mlx_ptr, self.width, self.height)
 
         self._fill_window_bg(MlxWindow.wcfg.WINDOW_BG_COLOR)

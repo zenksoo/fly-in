@@ -2,12 +2,11 @@ class ProjectBaseException(Exception):
     def __init__(self, *args: object) -> None:
         self.msg = args[0]
 
-    @classmethod
-    def render_error(cls, msg):
-        return f"Error Type '{cls.__name__}':\n\t{msg}"
+    def render_error(self):
+        return f"Error Type '{self.__class__.__name__}':\n\t{self.msg}"
 
     def __str__(self) -> str:
-        return self.__class__.render_error(self.msg)
+        return self.msg
 
 
 class MapParserError(ProjectBaseException):
