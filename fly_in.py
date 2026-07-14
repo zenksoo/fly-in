@@ -6,7 +6,7 @@ from PIL import Image
 from typing import Tuple
 from Visualizer import Canvas, MlxWindow, WindowCFG
 from Parser import MapParser
-from CExeptions import MapParserError
+from CExceptions import MapParserError
 
 def main():
     # with open("./Configs/window.toml", 'rb') as f:
@@ -21,9 +21,10 @@ def main():
 
 
     try:
-        map = MapParser.parse('maps/easy/03_basic_capacity.txt')
+        map = MapParser.parse("./maps/easy/03_basic_capacity.txt")
+        print(map.hubs)
     except MapParserError as e:
-        print(e.render_error())
+        print(e)
 
 
 
