@@ -1,4 +1,8 @@
-from .Exceptions import MapParserError
+from .Exceptions import (
+    MapParserError,
+    MetaDataParserError)
 
 
-__all__ = ["MapParserError"]
+__all__ = [
+    "MapParserError",
+    "MetaDataParserError"]

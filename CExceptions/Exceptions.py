@@ -11,3 +11,7 @@ class ProjectBaseException(Exception):
 
 class MapParserError(ProjectBaseException):
     pass
+
+
+class MetaDataParserError(ProjectBaseException):
+    pass
