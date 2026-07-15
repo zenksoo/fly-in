@@ -22,6 +22,7 @@ def main():
 
     try:
         map = MapParser.parse("./maps/easy/03_basic_capacity.txt")
+        print(map.connections)
     except MapParserError as e:
         print(e)
 
