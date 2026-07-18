@@ -16,7 +16,7 @@ clean:
 
 
 lint:
-	flake8 .
-	mypy . --warn-return-any \
+	uv tool run flake8 --exclude=.venv,MLX .
+	uv tool run mypy . --warn-return-any \
 	--warn-unused-ignores --ignore-missing-imports \
 	--disallow-untyped-defs --check-untyped-defs

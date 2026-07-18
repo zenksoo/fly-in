@@ -1,5 +1,6 @@
-
-
+from pydantic import BaseModel, Field
+from .Types import ZoneTypes, HubType, Colors
+from typing import Tuple
 
 
 def pack_rgba(r: int, g: int, b:int , a: int) -> int:
@@ -13,3 +14,27 @@ def HexColor_to_decimal(hex_color: str) -> int:
         int(hex_color[5:7], 16),
         int(hex_color[7:9], 16) if len(hex_color) > 7 else 255
     )
+
+
+class HubMetaData(BaseModel):
+    color: Colors = Colors.green
+    zone: ZoneTypes = ZoneTypes.normal
+    max_drones: int = Field(default=1, gt=0)
+
+
+class Hub(BaseModel):
+    name: str
+    type: HubType
+    x: int
+    y: int
+    metadata: HubMetaData = HubMetaData()
+
+
+class ConnectionMetadata(BaseModel):
+    max_link_capacity: int = Field(default=1, gt=1)
+
+class Connection(BaseModel):
+    start: str
+    end: str
+    metadata: ConnectionMetadata = ConnectionMetadata()
+

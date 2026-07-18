@@ -1,106 +1,102 @@
 import numpy as np
 from MLX.libmlx import *
 from PIL import Image
-from Utils import pack_rgba, HexColor_to_decimal
-from typing import Optional
-from pydantic import BaseModel, model_validator, Field, ValidationError
+from Utils import Hub
+from typing import List, Tuple
+from Parser import MapParser
+import tomllib
+from typing import Dict, Any
+from .wcfg import Cfg
+from .Canvas import Canvas
 
-
-# class Drone:
-#     def __init__(self, drone_name: str) -> None:
-#         self.name = drone_name
-#         self.img: mlx_image_t = mlx.mlx_new_image()
-
-class WindowCFG(BaseModel):
-    WINDOW_BG_COLOR: str
-    WINDOW_WIDTH: int
-    WINDOW_HEIGHT: int
-
-
-class Canvas:
-    @staticmethod
-    def _fill_image_by_static_color(img: mlx_image_t, color: str | int) -> None:
-        pixel_color: int = 0
-        if isinstance(color, str):
-            pixel_color = HexColor_to_decimal(color)
-        else:
-            pixel_color = color
-
-        for y in range(img.contents.height):
-            for x in range(img.contents.width):
-
-                idx = (y * img.contents.width + x) * 4
-                img.contents.pixels[idx] = pixel_color >> 24 & 0xFF
-                img.contents.pixels[idx + 1] = pixel_color >> 16 & 0xFF
-                img.contents.pixels[idx + 2] = pixel_color >> 8 & 0xFF
-                img.contents.pixels[idx + 3] = pixel_color & 0xFF
-
-    @staticmethod
-    def _fill_image_by_png(img: mlx_image_t,
-                          png: str | Image.Image,
-                          changed_color: str | int | None = None,
-                          change_color: bool = False) -> None:
-        if isinstance(png, str):
-            png = Image.open(png).convert("RGBA")
-
-        if change_color and isinstance(changed_color, str):
-            changed_color = HexColor_to_decimal(changed_color)
-
-        for y in range(img.contents.height):
-            for x in range(img.contents.width):
-                color = pack_rgba(*png.getpixel((x, y)))
-                if change_color and color == pack_rgba(130, 32, 211, 255):
-                    color = changed_color
-
-                idx = (y * img.contents.width + x) * 4
-                img.contents.pixels[idx] = color >> 24 & 0xFF
-                img.contents.pixels[idx + 1] = color >> 16 & 0xFF
-                img.contents.pixels[idx + 2] = color >> 8 & 0xFF
-                img.contents.pixels[idx + 3] = color & 0xFF
 
 class MlxWindow:
-    wcfg: WindowCFG
-    width: int
-    height: int
-    mlx_ptr: mlx_t
-    bg_img: mlx_image_t
+    def __init__(self, config_file: str) -> None:
+        with open(config_file, "rb") as f:
+            data = tomllib.load(f)
+        self.wcfg: Cfg = Cfg(**data)
+        self.mlx_ptr: mlx_t
 
-    def __init__(self, window_cfg: WindowCFG) -> None:
-        MlxWindow.wcfg = window_cfg
-        MlxWindow.width = window_cfg.WINDOW_WIDTH
-        MlxWindow.height = window_cfg.WINDOW_HEIGHT
+    def init(self, map: MapParser) -> mlx_t:
+        self.w, self.h = self._get_window_resolution(self.wcfg,
+            list(map.hubs.values()))
+
+        self.mlx_ptr = mlx.mlx_init(self.w, self.h, bytes(self.wcfg.window.title, "utf-8"), False)
+        self.bg_img = mlx.mlx_new_image(self.mlx_ptr, self.w, self.h)
+
+        mlx.mlx_image_to_window(self.mlx_ptr, self.bg_img, 0, 0)
+
+        Canvas._fill_image_by_static_color(self.bg_img, self.wcfg.window.bg_color)
+
+        self.bg_img.contents.instances[0].z = 1
+
+        banner_x = int(self.w / 2) - int(180 / 2)
+        banner_y = 40
+
+        hubs = list(map.hubs.values())
+        self._add_img_to_window("./Assets/images/banner.png", 180, 60, banner_x, banner_y, 3, None)
+        for h in hubs:
+            drone_png: str
+            if h.metadata.zone == "priority":
+                drone_png = "./Assets/images/hub_priority.png"
+            elif h.metadata.zone == "restricted":
+                drone_png = "./Assets/images/hub_restricted.png"
+            elif h.metadata.zone == "blocked":
+                drone_png = "./Assets/images/hub_blocked.png"
+            else:
+                drone_png = "./Assets/images/hub_normal.png"
+            h.x = self.wcfg.sizing.padding_x + (h.x * (80 + self.wcfg.sizing.space))
+            h.y = self.wcfg.sizing.padding_y + (h.y * (80 + self.wcfg.sizing.space))
+            print(h.x, h.y)
+
+            self._add_img_to_window(drone_png, 80, 80, h.x, h.y, 2, h.metadata.color.value)
+
+        self._add_img_to_window("./Assets/images/Drone.png", 32, 32, 80, 80, 3, None)
 
     @staticmethod
-    def _fill_window_bg(bg_color: str) -> None:
-        Canvas._fill_image_by_static_color(MlxWindow.bg_img, bg_color)
+    def _get_window_resolution(cfg: Cfg, hubs: List[Hub]) -> Tuple[int, int]:
+        min_x = min([h.x for h in hubs])
+        min_y = min([h.y for h in hubs])
 
-    def init_window(self, title: bytes) -> None:
-        MlxWindow.mlx_ptr = mlx.mlx_init(self.width, self.height, title, False)
-        MlxWindow.bg_img = mlx.mlx_new_image(self.mlx_ptr, self.width, self.height)
+        print(min_x)
+        print(min_y)
 
-        self._fill_window_bg(MlxWindow.wcfg.WINDOW_BG_COLOR)
-        mlx.mlx_image_to_window(self.mlx_ptr, self.bg_img, 0, 0)
-        self.bg_img.contents.instances[0].z = 0
+        for h in hubs:
+            h.x = abs(h.x) + abs(min_x)
+            h.y = abs(h.y) + abs(min_y)
 
-    def _put_in_middle(self, img: mlx_image_t) -> None:
-        x = int((self.width / 2) - (img.contents.width / 2))
-        y = int((self.height / 2) - (img.contents.height / 2))
+        min_x = min([h.x for h in hubs])
+        min_y = min([h.y for h in hubs])
+
+        for h in hubs:
+            h.x = abs(h.x) - abs(min_x)
+            h.y = abs(h.y) - abs(min_y)
+
+        hubs_x = [h.x for h in hubs]
+        hubs_y = [h.y for h in hubs]
+
+        print(hubs_x)
+        print(hubs_y)
+
+        w = (cfg.sizing.padding_x * 2) + ((max(hubs_x) + 1) * (80 + cfg.sizing.space)) -  cfg.sizing.space
+        h = (cfg.sizing.padding_y * 2) + ((max(hubs_y) + 1) * (80 + cfg.sizing.space)) - cfg.sizing.space
+
+        if w < 500:
+            w = 500
+
+        return (w, h)
+
+    def _add_img_to_window(self, png: str,
+            width: int, height: int, x: int, y: int, z: int,
+            color: int | None) -> mlx_image_t:
+
+        img = mlx.mlx_new_image(self.mlx_ptr, width, height)
+        img_bg = Image.open(png).convert("RGBA")
+        print(img_bg)
 
         mlx.mlx_image_to_window(self.mlx_ptr, img, x, y)
+        Canvas._fill_image_by_png(
+            img, img_bg, color, True)
+        img.contents.instances[0].z = z
 
-
-    def _put_in_topleft(self, img: mlx_image_t) -> None:
-        pass
-
-
-    def middle_window(self):
-        img = mlx.mlx_new_image(self.mlx_ptr, 180, 240)
-        Canvas._fill_image_by_png(img, "./Assets/menu.png")
-
-        self._put_in_middle(img)
-
-
-
-class Drone:
-    def __init__(self) -> None:
-        self.color = 0xff0000
+        return img
