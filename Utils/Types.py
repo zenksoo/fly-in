@@ -1,8 +1,3 @@
-
-from enum import Enum
-
-
-
 from enum import Enum
 
 
@@ -82,7 +77,6 @@ class ZoneTypes(str, Enum):
     blocked = "blocked"
     restricted = "restricted"
     priority = "priority"
-
 
 
 class HubType(str, Enum):

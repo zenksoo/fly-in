@@ -28,7 +28,7 @@ hub: priority_hub 5 0 [zone=priority color=cyan max_drones=4]
 hub: priority_trap1 5 1 [zone=priority color=cyan]
 hub: priority_trap2 6 1 [zone=priority color=cyan]
 hub: priority_dead_end 6 2 [color=red]
-hub: priority_correct 6 0 [zone=blocked color=cyan max_drones=3]
+hub: priority_correct 6 0 [zone=priority color=cyan max_drones=3]
 
 # Layer 5: Multi-path convergence hell
 hub: conv_restricted1 7 0 [zone=restricted color=brown max_drones=2]

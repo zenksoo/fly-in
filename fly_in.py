@@ -5,11 +5,14 @@ from Parser import MapParser
 from CExceptions import MapParserError
 
 
+CONFIG_PATH = "./config.toml"
+
+
 def cli_argument_parser() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="tzzz")
     parser.add_argument(
         "-m", "--map", type=str,
-        default="./maps/easy/03_basic_capacity.txt",
+        default="./maps/custom/project_title.txt",
         help="path to map configuration file")
 
     return parser.parse_args()
@@ -18,13 +21,13 @@ def cli_argument_parser() -> argparse.Namespace:
 def main():
     args = cli_argument_parser()
     try:
-        map: MapParser = MapParser.from_file(args.map)
+        map_data: MapParser = MapParser.from_file(args.map)
 
-        mlx_window = MlxWindow("./config.toml")
+        window = MlxWindow(CONFIG_PATH)
 
-        mlx_ptr = mlx_window.init(map)
+        mlx_ptr = window.init(map_data)
 
-        mlx.mlx_loop(mlx_window.mlx_ptr)
+        mlx.mlx_loop(window.mlx_ptr)
     except MapParserError as e:
         print(e)
 

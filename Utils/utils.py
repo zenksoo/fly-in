@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from .Types import ZoneTypes, HubType, Colors
 from typing import Tuple
+from MLX.libmlx import *
 
 
 def pack_rgba(r: int, g: int, b:int , a: int) -> int:
@@ -22,19 +23,34 @@ class HubMetaData(BaseModel):
     max_drones: int = Field(default=1, gt=0)
 
 
+class HUBGfx:
+    w: int = 0
+    h: int = 0
+    top_label: dict[str, Tuple[int, int]] = {
+        "start": (0, 0),
+        "end": (0, 0)
+    }
+    bottom_label: dict[str, Tuple[int, int]] = {
+        "start": (0, 0),
+        "end": (0, 0)
+    }
+
+
 class Hub(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     name: str
     type: HubType
     x: int
     y: int
     metadata: HubMetaData = HubMetaData()
+    gfx: HUBGfx = HUBGfx()
 
 
 class ConnectionMetadata(BaseModel):
-    max_link_capacity: int = Field(default=1, gt=1)
+    max_link_capacity: int = Field(default=1, gt=0)
+
 
 class Connection(BaseModel):
     start: str
     end: str
     metadata: ConnectionMetadata = ConnectionMetadata()
-

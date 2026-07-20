@@ -1,8 +1,9 @@
 from .Exceptions import (
     MapParserError,
-    MetaDataParserError)
+    MetaDataParserError, CanvasError)
 
 
 __all__ = [
     "MapParserError",
-    "MetaDataParserError"]
+    "MetaDataParserError",
+    "CanvasError"]

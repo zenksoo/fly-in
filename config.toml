@@ -1,20 +1,11 @@
 [window]
 title          = "Fly-In"
 min_width      = 600
-bg_color       = 0x282828ff
-
-
-[hub]
-show_name      = false
+bg_color       = 0x000013ff
 text_color     = 0xffffffff
-
-
-[connection]
-show_capacity  = true
-text_color     = 0xC0C0C0ff
-
-
-[sizing]
-space          = 54
+enable_hub_name= true
+enable_connection_txt = true
+x_gap       = 42
+y_gap        = 92
 padding_x      = 64
 padding_y      = 120

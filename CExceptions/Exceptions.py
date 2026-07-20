@@ -15,3 +15,7 @@ class MapParserError(ProjectBaseException):
 
 class MetaDataParserError(ProjectBaseException):
     pass
+
+
+class CanvasError(ProjectBaseException):
+    pass

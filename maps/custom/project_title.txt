@@ -1,0 +1,72 @@
+nb_drones: 1
+
+start_hub: start 0 0 [color=green]
+
+hub: f1 1 0 [color=indigo]
+hub: f2 2 0 [color=indigo]
+hub: f3 1 1 [color=indigo]
+hub: f4 2 1 [color=indigo]
+hub: f5 1 2 [color=indigo]
+
+hub: l1 3 0 [color=indigo]
+hub: l2 3 1 [color=indigo]
+hub: l3 3 2 [color=indigo]
+hub: l4 4 2 [color=indigo]
+
+hub: y1 5 0 [color=indigo]
+hub: y2 7 0 [color=indigo]
+hub: y3 6 1 [color=indigo]
+hub: y4 6 2 [color=indigo]
+
+hub: sp1 8 1 [color=indigo]
+hub: sp2 9 1 [color=indigo]
+
+hub: i1 10 0 [color=indigo]
+hub: i2 10 1 [color=indigo]
+hub: i3 10 2 [color=indigo]
+
+hub: n1 11 0 [color=indigo]
+hub: n2 11 1 [color=indigo]
+hub: n3 11 2 [color=indigo]
+hub: n4 12 1 [color=indigo]
+hub: n5 13 0 [color=indigo]
+hub: n6 13 1 [color=indigo]
+hub: n7 13 2 [color=indigo]
+
+end_hub: end 14 2 [color=red]
+
+
+connection: start-f1
+
+connection: f1-f2 [max_link_capacity=4]
+connection: f1-f3 [max_link_capacity=4]
+connection: f3-f4 [max_link_capacity=4]
+connection: f3-f5 [max_link_capacity=4]
+
+connection: l1-l2 [max_link_capacity=4]
+connection: l2-l3 [max_link_capacity=4]
+connection: l3-l4 [max_link_capacity=4]
+
+connection: y1-y3 [max_link_capacity=4]
+connection: y3-y2 [max_link_capacity=4]
+connection: y3-y4 [max_link_capacity=4]
+
+connection: sp1-sp2 [max_link_capacity=4]
+
+connection: i1-i2 [max_link_capacity=4]
+connection: i2-i3 [max_link_capacity=4]
+
+connection: n1-n2 [max_link_capacity=4]
+connection: n2-n3 [max_link_capacity=4]
+connection: n1-n4 [max_link_capacity=4]
+connection: n4-n7 [max_link_capacity=4]
+connection: n5-n6 [max_link_capacity=4]
+connection: n6-n7 [max_link_capacity=4]
+
+connection: n7-end
+
+connection: f2-l1
+connection: l4-y4
+connection: y2-sp1
+connection: sp2-i2
+connection: i3-n3
