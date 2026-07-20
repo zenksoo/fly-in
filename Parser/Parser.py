@@ -1,6 +1,7 @@
 from CExceptions import MapParserError, MetaDataParserError
-from Utils import Hub, HubMetaData, Connection, ConnectionMetadata, ZoneTypes, HubType, Colors
-from typing import List, Dict, Any, Tuple
+from Utils import (Hub, HubMetaData, Connection,
+                   ConnectionMetadata, ZoneTypes, Colors)
+from typing import List, Dict, Any
 from pydantic import ValidationError
 
 import re
@@ -67,14 +68,16 @@ class MapParser:
                 )
 
     @staticmethod
-    def _metadata_parser(metadata_for: str, data: str) -> HubMetaData | ConnectionMetadata:
+    def _metadata_parser(metadata_for: str, data: str
+                         ) -> HubMetaData | ConnectionMetadata | None:
         if not data:
             if metadata_for == "hub":
                 return HubMetaData()
             elif metadata_for == "connection":
                 return ConnectionMetadata()
 
-        registred_metadata = ['color', 'max_drones', 'zone', "max_link_capacity"]
+        registred_metadata = ['color', 'max_drones',
+                              'zone', "max_link_capacity"]
         metadata_dict: Dict[str, Any] = {}
 
         data = data[2: len(data) - 1]
@@ -139,10 +142,11 @@ class MapParser:
             MapParser._metadata_pattern(hub_pattern, hub_match)
         try:
             try:
-                hub["metadata"] = MapParser._metadata_parser("hub", hub["metadata"])
+                hub["metadata"] = MapParser._metadata_parser(
+                    "hub", hub["metadata"])
             except ValidationError:
                 raise MapParserError(
-                    f"invalid value\
+                    "invalid value\
                     in Metadata for 'max_drones'\n\n\t'max_drones'\
                     must be a positive integer greater than zero.")
             except ValueError:
@@ -166,22 +170,17 @@ class MapParser:
     def _connections_handler(c_match: re.Match, c_pattern: re.Pattern
                              ) -> Connection:
 
-        metadata = {
-            "max_link_capacity": 1
-        }
-
         connection: Dict[str, Any] = c_match.groupdict()
 
         if not connection["metadata"]:
             MapParser._metadata_pattern(c_pattern, c_match)
-        # connection["metadata"] = _parse_connection_metadata(data["metadata"])
         try:
             try:
                 connection["metadata"] = MapParser._metadata_parser(
                     "connection", connection["metadata"])
             except ValidationError:
                 raise MapParserError(
-                    f"invalid value Metadata for 'max_link_capacity'\n\n\t\
+                    "invalid value Metadata for 'max_link_capacity'\n\n\t\
                     'max_link_capacity'\
                     must be a positive integer greater than zero.")
             except ValueError:
@@ -208,7 +207,7 @@ class MapParser:
 
     @classmethod
     def from_file(cls, mapfile_path: str | io.TextIOWrapper
-              ) -> "MapParser":
+                  ) -> "MapParser":
         map_file: io.TextIOWrapper = cls._validated_mapfile(mapfile_path)
 
         nd_drones: int = -1

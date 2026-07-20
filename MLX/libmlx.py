@@ -19,12 +19,12 @@ from platform import system
 
 try: # Load FFI Library
     lib = 'libmlx42'
-    system = system()
-    if system == "Linux":
+    sys = system()
+    if sys == "Linux":
         lib_name = f"{lib}.so"
-    elif system == "Darwin":
+    elif sys == "Darwin":
         lib_name = f"{lib}.dylib"
-    elif system == "Windows":
+    elif sys == "Windows":
         lib_name = f"{lib}.dll"
     else:
         raise RuntimeError("Unsupported operating system")
@@ -140,7 +140,6 @@ MLX_KEY_F19             = 308
 MLX_KEY_F20             = 309
 MLX_KEY_F21             = 310
 
-MLX_KEY_F12: int
 MLX_KEY_F22             = 311
 MLX_KEY_F23             = 312
 MLX_KEY_F24             = 313

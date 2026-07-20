@@ -1,8 +1,8 @@
-from MLX.libmlx import *
+from MLX.libmlx import mlx_image_t
 from PIL import Image
 from Utils import HexColor_to_decimal, pack_rgba, Colors
-from CExceptions import *
-from typing import List, Dict, Tuple
+from CExceptions import CanvasError
+from typing import Dict, Tuple
 
 
 class Canvas:
@@ -38,9 +38,9 @@ class Canvas:
 
     @staticmethod
     def _load_png_to_image(img: mlx_image_t,
-                          png: str | Image.Image,
-                          replacement_color: str | int | None = None,
-                          source_color: str | int | None = None) -> None:
+                           png: str | Image.Image,
+                           replacement_color: str | int | None = None,
+                           source_color: str | int | None = None) -> None:
         if isinstance(png, str):
             png = Image.open(png).convert("RGBA")
 
@@ -49,30 +49,33 @@ class Canvas:
                 replacement_color = HexColor_to_decimal(replacement_color)
             except Exception:
                 raise CanvasError(
-                    f"invalid value to HexColor_to_decimal method\n\
-                    \n\tvalue must be a valid hex color format as string (e.g #00ff00).")
+                    "invalid value to HexColor_to_decimal method\n\
+                    \n\tvalue must be a valid hex color format as \
+                    string (e.g #00ff00).")
 
         if isinstance(source_color, str):
             try:
                 source_color = HexColor_to_decimal(source_color)
             except Exception:
                 raise CanvasError(
-                    f"invalid value to HexColor_to_decimal method\n\
-                    \n\tvalue must be a valid hex color format as string (e.g #00ff00).")
+                    "invalid value to HexColor_to_decimal method\n\
+                    \n\tvalue must be a valid hex color format as \
+                    string (e.g #00ff00).")
 
         for y in range(img.contents.height):
             for x in range(img.contents.width):
                 pixel_color = pack_rgba(*png.getpixel((x, y)))
-                if replacement_color and source_color and pixel_color == source_color:
+                if (replacement_color and source_color and
+                   pixel_color == source_color):
                     pixel_color = replacement_color
 
                 Canvas._fill_pixel(img, x, y, pixel_color)
 
     @staticmethod
     def _load_png_to_layer(layer: mlx_image_t,
-        png: str | Image.Image, x: int, y: int,
-        replacement_color: str | int | None = None,
-        source_color: int | None = None) -> None:
+                           png: str | Image.Image, x: int, y: int,
+                           replacement_color: str | int | None = None,
+                           source_color: int | None = None) -> None:
 
         if isinstance(png, str):
             png = Image.open(png).convert("RGBA")
@@ -117,15 +120,19 @@ class Canvas:
                 png = Image.open("./Assets/fonts/digits.png")
                 glyph_x = DIGITS.index(char)
 
-            glyph_x = glyph_x * 6;
+            glyph_x = glyph_x * 6
             img_x = char_idx * 6
 
             for y in range(8):
                 for x in range(6):
                     pixel_color = pack_rgba(*png.getpixel((glyph_x + x, y)))
-                    if replacement_color and pixel_color == (0xffffff << 8) + 0xff:
+                    if (replacement_color and
+                       pixel_color == (0xffffff << 8) + 0xff):
+
                         pixel_color = replacement_color
-                    Canvas._fill_pixel(img, img_x + x + layer_x, y + layer_y, pixel_color)
+
+                    Canvas._fill_pixel(img, img_x + x + layer_x,
+                                       y + layer_y, pixel_color)
 
         if isinstance(color, Colors):
             color = color.value
@@ -149,8 +156,9 @@ class Canvas:
                 Canvas._fill_pixel(text_layer, x, y, 0x00000000)
 
     @staticmethod
-    def _draw_line(img: mlx_image_t, x0, y0, x1, y1, width,
-                   color: int):
+    def _draw_line(img: mlx_image_t, x0: int, y0: int,
+                   x1: int, y1: int, width: int,
+                   color: int) -> None:
         dx = abs(x1 - x0)
         dy = abs(y1 - y0)
         sx = 1 if x0 < x1 else -1
@@ -167,17 +175,19 @@ class Canvas:
         # Standard integer scaling for thickness offsets
         # x_offset and y_offset define the thickness direction
         # We multiply by (width - 1) / 2 to center the line
-        w_factor = (width - 1) / (2.0 * length)
-        x_offset = int(dy * w_factor)
-        y_offset = int(dx * w_factor)
+        # w_factor = (width - 1) / (2.0 * length)
+        # x_offset = int(dy * w_factor)
+        # y_offset = int(dx * w_factor)
 
         while True:
             # Instead of drawing one pixel, draw a perpendicular span
             # to create the desired width
             for w in range(-int(width/2), int((width+1)/2)):
                 # Offset the pixel perpendicular to the line direction
-                px = x0 + (w * (1 if dy > dx else 0) * (-sy if sx > 0 else sy))
-                py = y0 + (w * (1 if dx >= dy else 0) * (sx if sy > 0 else -sx))
+                px = w * (1 if dy > dx else 0) * (-sy if sx > 0 else sy)
+                px += x0
+                py = w * (1 if dx >= dy else 0) * (sx if sy > 0 else -sx)
+                py += y0
                 Canvas._fill_pixel(img, px, py, color)
 
             if x0 == x1 and y0 == y1:

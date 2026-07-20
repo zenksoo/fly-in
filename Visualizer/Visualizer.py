@@ -1,11 +1,10 @@
-import numpy as np
-from MLX.libmlx import *
+from MLX.libmlx import mlx, mlx_image_t, mlx_t
 from PIL import Image
-from Utils import pack_rgba, HexColor_to_decimal, Hub, Colors, Connection
+from Utils import Hub, Connection
 from typing import List, Tuple
 from Parser import MapParser
 import tomllib
-from typing import Dict, Any
+from typing import Dict
 from .wcfg import WCfg
 from .Canvas import Canvas
 
@@ -15,8 +14,8 @@ BANNER_PATH = "./Assets/images/banner.png"
 BACKGROUND_LAYER = 0
 CONNECTIONS_LAYER = 1
 HUBS_LAYER = 2
-TEXT_LAYER       = 3
-BANNER_LAYER     = 4
+TEXT_LAYER = 3
+BANNER_LAYER = 4
 
 
 class MlxWindow:
@@ -26,8 +25,8 @@ class MlxWindow:
         self.wcfg: WCfg = WCfg(**data)
         self.mlx_ptr: mlx_t
 
-    def _create_layer(self, z) -> mlx_image_t:
-        img = mlx.mlx_new_image(
+    def _create_layer(self, z: int) -> mlx_image_t:
+        img: mlx_image_t = mlx.mlx_new_image(
             self.mlx_ptr, self.mlx_ptr.contents.width,
             self.mlx_ptr.contents.height
         )
@@ -48,9 +47,8 @@ class MlxWindow:
 
         img_w, img_h = png.size
 
-        mlx_img = mlx.mlx_new_image(self.mlx_ptr, img_w, img_h)
+        mlx_img: mlx_image_t = mlx.mlx_new_image(self.mlx_ptr, img_w, img_h)
         mlx.mlx_image_to_window(self.mlx_ptr, mlx_img, x, y)
-
 
         mlx_img.contents.instances[0].z = z
         Canvas._load_png_to_image(mlx_img, png, changed_color, target_color)
@@ -82,9 +80,8 @@ class MlxWindow:
 
             hub.gfx.w, hub.gfx.h = png.size
 
-
             if self.wcfg.enable_hub_name:
-                hub.gfx.top_label =  Canvas._draw_text(
+                hub.gfx.top_label = Canvas._draw_text(
                     self.text_layer, hub.name, hub.x, hub.y - 12,
                     self.wcfg.text_color)
 
@@ -114,13 +111,16 @@ class MlxWindow:
         hubs_x = [h.x for h in hubs]
         hubs_y = [h.y for h in hubs]
 
-        w = (cfg.padding_x * 2) + ((max(hubs_x) + 1) * (80 + cfg.x_gap)) -  cfg.x_gap
-        h = (cfg.padding_y * 2) + ((max(hubs_y) + 1) * (80 + cfg.y_gap)) - cfg.y_gap
+        width = (max(hubs_x) + 1) * (80 + cfg.x_gap) - cfg.x_gap
+        width = (cfg.padding_x * 2) + width
 
-        if w < 500:
-            w = 500
+        height = (max(hubs_y) + 1) * (80 + cfg.y_gap) - cfg.y_gap
+        height = (cfg.padding_y * 2) + height
 
-        return (w, h)
+        if width < 500:
+            width = 500
+
+        return (width, height)
 
     def render_connections(self,
                            connections: List[Connection],
@@ -169,13 +169,13 @@ class MlxWindow:
             middle_x = block_size * i + x
             Canvas._draw_text(self.text_layer, txt, middle_x, y)
 
-
-    def init(self, map: MapParser) -> mlx_t:
+    def init(self, map: MapParser) -> None:
         hubs = list(map.hubs.values())
 
         self.w, self.h = self._get_window_resolution(self.wcfg, hubs)
 
-        self.mlx_ptr = mlx.mlx_init(self.w, self.h, bytes(self.wcfg.title, "utf-8"), True)
+        self.mlx_ptr = mlx.mlx_init(self.w, self.h,
+                                    bytes(self.wcfg.title, "utf-8"), True)
         self.bg_layer = self._create_layer(BACKGROUND_LAYER)
         self.text_layer = self._create_layer(TEXT_LAYER)
 
@@ -196,4 +196,3 @@ class MlxWindow:
             "SPACE: RUN / PAUSE",
             "STATUS: SOLVED"
         ])
-

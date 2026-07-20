@@ -18,14 +18,14 @@ def cli_argument_parser() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main():
+def main() -> None:
     args = cli_argument_parser()
     try:
         map_data: MapParser = MapParser.from_file(args.map)
 
         window = MlxWindow(CONFIG_PATH)
 
-        mlx_ptr = window.init(map_data)
+        window.init(map_data)
 
         mlx.mlx_loop(window.mlx_ptr)
     except MapParserError as e:
