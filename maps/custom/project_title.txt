@@ -33,7 +33,7 @@ hub: n5 13 0 [color=indigo]
 hub: n6 13 1 [color=indigo]
 hub: n7 13 2 [color=indigo]
 
-end_hub: end 14 2 [color=red]
+end_hub: end 14 2 [color=rainbow]
 
 
 connection: start-f1

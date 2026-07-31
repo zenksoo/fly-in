@@ -1,6 +1,6 @@
 from MLX.libmlx import mlx, mlx_image_t, mlx_t
 from PIL import Image
-from Utils import Hub, Connection
+from Utils import Hub, Connection, Colors
 from typing import List, Tuple
 from Parser import MapParser
 import tomllib
@@ -22,7 +22,8 @@ class MlxWindow:
     def __init__(self, config_file: str) -> None:
         with open(config_file, "rb") as f:
             data = tomllib.load(f)
-        self.wcfg: WCfg = WCfg(**data)
+        print(data)
+        self.wcfg: WCfg = WCfg(**data["window"])
         self.mlx_ptr: mlx_t
 
     def _create_layer(self, z: int) -> mlx_image_t:
@@ -72,11 +73,9 @@ class MlxWindow:
 
             png = Image.open(hub_png).convert("RGBA")
 
-            hub_color = hub.metadata.color.value
-            source_color = 0x8220d3ff
             Canvas._load_png_to_layer(self.hubs_layer,
                                       png, hub.x, hub.y,
-                                      hub_color, source_color)
+                                      hub.metadata.color, Colors.hub_source)
 
             hub.gfx.w, hub.gfx.h = png.size
 
@@ -138,7 +137,7 @@ class MlxWindow:
             ex = int(hubs[con.end].x + (hub_w / 2))
             ey = int(hubs[con.end].y + (hub_h / 2))
 
-            width = con.metadata.max_link_capacity * 15
+            width = con.metadata.max_link_capacity * (16 - (2 * con.metadata.max_link_capacity))
             Canvas._draw_line(
                 self.connections_layer, sx, sy, ex, ey, width, color)
 
@@ -173,6 +172,9 @@ class MlxWindow:
         hubs = list(map.hubs.values())
 
         self.w, self.h = self._get_window_resolution(self.wcfg, hubs)
+
+
+        print(self.w, self.h)
 
         self.mlx_ptr = mlx.mlx_init(self.w, self.h,
                                     bytes(self.wcfg.title, "utf-8"), True)

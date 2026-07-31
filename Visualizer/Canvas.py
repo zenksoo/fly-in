@@ -74,23 +74,32 @@ class Canvas:
     @staticmethod
     def _load_png_to_layer(layer: mlx_image_t,
                            png: str | Image.Image, x: int, y: int,
-                           replacement_color: str | int | None = None,
-                           source_color: int | None = None) -> None:
+                           replacement_color: Colors | None = None,
+                           source_color: Colors | None = None) -> None:
+
+        rainbow_colors = [Colors.red, Colors.pink, Colors.azure, Colors.green,
+                          Colors.blue, Colors.yellow, Colors.salmon,
+                          Colors.orange, Colors.brown, Colors.cyan]
+        rainbow_idx = 0
 
         if isinstance(png, str):
             png = Image.open(png).convert("RGBA")
 
         png_w, png_h = png.size
 
-        if isinstance(replacement_color, str):
-            replacement_color = HexColor_to_decimal(replacement_color)
-
         for png_y in range(png_h):
+            if png_y and png_y % int(png_h / len(rainbow_colors)) == 0:
+                rainbow_idx += 1
+                if rainbow_idx >= len(rainbow_colors):
+                    rainbow_idx = 0
             for png_x in range(png_w):
                 color = pack_rgba(*png.getpixel((png_x, png_y)))
 
-                if replacement_color and color == source_color:
-                    color = replacement_color
+                if replacement_color and source_color and color == source_color.value:
+                    if replacement_color == Colors.rainbow:
+                        color = rainbow_colors[rainbow_idx].value
+                    else:
+                        color = replacement_color.value
 
                 Canvas._fill_pixel(layer, x + png_x, y + png_y, color)
 

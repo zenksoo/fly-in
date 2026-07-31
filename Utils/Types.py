@@ -4,6 +4,7 @@ from enum import Enum
 class Colors(Enum):
     #  Blacks
     black = (0x000000 << 8) + 0xff
+    darkred = 0x000000ff
 
     # Whites & Off-Whites
     white = (0xFFFFFF << 8) + 0xff
@@ -61,6 +62,10 @@ class Colors(Enum):
     orchid = (0xDA70D6 << 8) + 0xff
     indigo = (0x4B0082 << 8) + 0xff
     purple = (0x800080 << 8) + 0xff
+
+    rainbow = 0
+
+    hub_source = 0x8220d3ff
 
 
 class ZoneTypes(str, Enum):

@@ -12,3 +12,4 @@ class WCfg(BaseModel):
     y_gap: int = 92
     padding_x: int = 64
     padding_y: int = 120
+
