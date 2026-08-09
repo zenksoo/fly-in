@@ -4,12 +4,13 @@ from Visualizer import MlxWindow
 from Parser import MapParser
 from CExceptions import MapParserError, InvalidArgument
 from Utils import HexColor_to_decimal
+from sys import stderr
 
 CONFIG_PATH = "./config.toml"
 
 
 def cli_argument_parser() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="tzzz")
+    parser = argparse.ArgumentParser(description="Fly-In")
     parser.add_argument(
         "-m", "--map", type=str,
         default="./maps/custom/project_title.txt",
@@ -29,7 +30,8 @@ def main() -> None:
 
         mlx.mlx_loop(window.mlx_ptr)
     except MapParserError as e:
-        print(e)
+        print(e, file=stderr)
+        exit(1)
 
 
 if __name__ == "__main__":

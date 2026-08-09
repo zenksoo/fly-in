@@ -17,7 +17,8 @@ class Canvas:
         img.contents.pixels[idx + 3] = pixel_color & 0xFF
 
     @staticmethod
-    def _fill_window_bg(img: mlx_image_t, color: int | Colors) -> None:
+    def _fill_window_bg(img: mlx_image_t, color: int | Colors,
+                        bg_point_effect: int | Colors) -> None:
 
         def _pick_color(color: Colors | int) -> int:
             if isinstance(color, Colors):
@@ -31,7 +32,7 @@ class Canvas:
             for x in range(img.contents.width):
 
                 if (x - 4) % 32 == 0 and (y - 4) % 32 == 0:
-                    decimal_pxcolor = HexColor_to_decimal("#919191ff")
+                    decimal_pxcolor = bg_point_effect
                 else:
                     decimal_pxcolor = _pick_color(color)
                 Canvas._fill_pixel(img, x, y, decimal_pxcolor)

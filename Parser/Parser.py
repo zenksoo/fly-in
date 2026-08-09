@@ -224,6 +224,7 @@ class MapParser:
             line = line.split("#")[0].strip()
 
             nd_pattern = re.compile(r"^nb_drones\s*:\s*(?P<num>(-?\d+)?)$")
+
             hub_pattern = re.compile(
                 r"^(?P<type>start_hub|end_hub|hub):\s*"
                 r"(?P<name>\w+)"

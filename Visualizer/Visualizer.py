@@ -26,11 +26,17 @@ class MlxWindow:
         self.wcfg: WCfg = WCfg(**data["window"])
         self.mlx_ptr: mlx_t
 
-    def _create_layer(self, z: int) -> mlx_image_t:
+    def _create_layer(self, z: int, width: int | None = None,
+                      height: int | None = None) -> mlx_image_t:
+
+        if not width:
+            width = self.mlx_ptr.contents.width
+
+        if not height:
+            height = self.mlx_ptr.contents.height
+
         img: mlx_image_t = mlx.mlx_new_image(
-            self.mlx_ptr, self.mlx_ptr.contents.width,
-            self.mlx_ptr.contents.height
-        )
+            self.mlx_ptr, width, height)
         mlx.mlx_image_to_window(self.mlx_ptr, img, 0, 0)
 
         img.contents.instances[0].z = z
@@ -107,13 +113,13 @@ class MlxWindow:
             h.x = abs(h.x) - abs(min_x)
             h.y = abs(h.y) - abs(min_y)
 
-        hubs_x = [h.x for h in hubs]
-        hubs_y = [h.y for h in hubs]
+        max_x = max([h.x for h in hubs])
+        max_y = max([h.y for h in hubs])
 
-        width = (max(hubs_x) + 1) * (80 + cfg.x_gap) - cfg.x_gap
+        width = (max_x + 1) * (80 + cfg.x_gap) - cfg.x_gap
         width = (cfg.padding_x * 2) + width
 
-        height = (max(hubs_y) + 1) * (80 + cfg.y_gap) - cfg.y_gap
+        height = (max_y + 1) * (80 + cfg.y_gap) - cfg.y_gap
         height = (cfg.padding_y * 2) + height
 
         if width < 500:
@@ -155,33 +161,50 @@ class MlxWindow:
     def _window_footer(self, texts: List[str]) -> None:
         x = self.wcfg.padding_x
         y = self.mlx_ptr.contents.height - int(self.wcfg.padding_y / 2)
-        txt = f"WIDTH: {self.mlx_ptr.contents.width}"
 
-        total_len = sum([len(txt) for txt in texts])
-        space = self.mlx_ptr.contents.width - self.wcfg.padding_x
-        space = int((space - total_len) / len(texts))
+        breaked = False
+        txt_ln = len(texts)
 
-        block_size = self.mlx_ptr.contents.width
-        block_size = int(block_size / len(texts))
+        window_width = self.mlx_ptr.contents.width
+        valid_width = window_width - (self.wcfg.padding_x * 2)
 
-        for txt, i in zip(texts, range(len(texts))):
-            middle_x = block_size * i + x
-            Canvas._draw_text(self.text_layer, txt, middle_x, y)
+        text_block = max([len(txt) * 6 for txt in texts])
+
+        def calculate_spacing(breaked: bool):
+            sp = valid_width - (text_block * txt_ln)
+            if breaked:
+                sp = valid_width - (text_block * (txt_ln / 2))
+
+            sp = int(sp / (txt_ln + 1))
+            return sp
+
+        if (calculate_spacing(False) < 30 or
+            valid_width < text_block * txt_ln):
+            breaked = True
+
+        spacing = calculate_spacing(breaked)
+
+        for txt, i in zip(texts, range(txt_ln)):
+            if (breaked and i == txt_ln / 2):
+                y += 26
+                x = self.wcfg.padding_x
+            x += spacing
+            Canvas._draw_text(self.text_layer, txt, x, y)
+            x += text_block
 
     def init(self, map: MapParser) -> None:
         hubs = list(map.hubs.values())
 
         self.w, self.h = self._get_window_resolution(self.wcfg, hubs)
 
-
-        print(self.w, self.h)
-
         self.mlx_ptr = mlx.mlx_init(self.w, self.h,
-                                    bytes(self.wcfg.title, "utf-8"), True)
+                                    bytes(self.wcfg.title, "utf-8"),
+                                    self.wcfg.resizing)
         self.bg_layer = self._create_layer(BACKGROUND_LAYER)
         self.text_layer = self._create_layer(TEXT_LAYER)
 
-        Canvas._fill_window_bg(self.bg_layer, self.wcfg.bg_color)
+        Canvas._fill_window_bg(self.bg_layer, self.wcfg.bg_color,
+                               self.wcfg.bg_points_effect)
 
         banner_img = Image.open(BANNER_PATH).convert("RGBA")
         banner_x = (self.w - banner_img.size[0]) // 2
