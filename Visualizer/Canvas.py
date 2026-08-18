@@ -26,13 +26,13 @@ class Canvas:
             else:
                 return color
 
-        decimal_pxcolor = _pick_color(color)
+        decimal_pxcolor: int = _pick_color(color)
 
         for y in range(img.contents.height):
             for x in range(img.contents.width):
 
                 if (x - 4) % 32 == 0 and (y - 4) % 32 == 0:
-                    decimal_pxcolor = bg_point_effect
+                    decimal_pxcolor = _pick_color(bg_point_effect)
                 else:
                     decimal_pxcolor = _pick_color(color)
                 Canvas._fill_pixel(img, x, y, decimal_pxcolor)
@@ -96,7 +96,8 @@ class Canvas:
             for png_x in range(png_w):
                 color = pack_rgba(*png.getpixel((png_x, png_y)))
 
-                if replacement_color and source_color and color == source_color.value:
+                if (replacement_color and source_color and
+                   color == source_color.value):
                     if replacement_color == Colors.rainbow:
                         color = rainbow_colors[rainbow_idx].value
                     else:

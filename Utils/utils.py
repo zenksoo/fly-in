@@ -16,10 +16,10 @@ def HexColor_to_decimal(hex_color: str) -> int:
 
     if len(hex_color) == 4 or len(hex_color) == 5:
         return pack_rgba(
-        int(hex_color[1:2] * 2, 16),
-        int(hex_color[2:3] * 2, 16),
-        int(hex_color[3:4] * 2, 16),
-        int(hex_color[4:5] * 2, 16) if len(hex_color) > 4 else 255
+            int(hex_color[1:2] * 2, 16),
+            int(hex_color[2:3] * 2, 16),
+            int(hex_color[3:4] * 2, 16),
+            int(hex_color[4:5] * 2, 16) if len(hex_color) > 4 else 255
         )
     elif len(hex_color) == 7 or len(hex_color) == 9:
         return pack_rgba(

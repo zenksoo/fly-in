@@ -12,18 +12,19 @@ class CodeBaseException(Exception):
 
         tb = self.__traceback__
         # walk to the last frame — where the raise actually happened
-        while tb.tb_next:
+        while tb and tb.tb_next:
             if not tb.tb_next:
                 break
             tb = tb.tb_next
 
-        filename = tb.tb_frame.f_code.co_filename
-        lineno = tb.tb_lineno
-        func_name = tb.tb_frame.f_code.co_name
-
-        print(f"\n- Error In {func_name}()")
-        print(f"- Error Line : {filename}:{lineno} ")
+        if tb:
+            filename = tb.tb_frame.f_code.co_filename
+            lineno = tb.tb_lineno
+            func_name = tb.tb_frame.f_code.co_name
+            print(f"\n- Error In {func_name}()")
+            print(f"- Error Line : {filename}:{lineno} ")
         return ""
+
 
 class ProjectBaseException(Exception):
     def __init__(self, *args: object) -> None:
@@ -31,7 +32,6 @@ class ProjectBaseException(Exception):
 
     def __str__(self) -> str:
         return re.sub(r"( +)", " ", self.msg)
-
 
 
 class MapParserError(ProjectBaseException):

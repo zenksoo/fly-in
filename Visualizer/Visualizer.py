@@ -1,7 +1,7 @@
 from MLX.libmlx import mlx, mlx_image_t, mlx_t
 from PIL import Image
 from Utils import Hub, Connection, Colors
-from typing import List, Tuple
+from typing import List, Tuple, Any
 from Parser import MapParser
 import tomllib
 from typing import Dict
@@ -143,7 +143,8 @@ class MlxWindow:
             ex = int(hubs[con.end].x + (hub_w / 2))
             ey = int(hubs[con.end].y + (hub_h / 2))
 
-            width = con.metadata.max_link_capacity * (16 - (2 * con.metadata.max_link_capacity))
+            width = con.metadata.max_link_capacity
+            width *= (16 - (2 * con.metadata.max_link_capacity))
             Canvas._draw_line(
                 self.connections_layer, sx, sy, ex, ey, width, color)
 
@@ -170,7 +171,7 @@ class MlxWindow:
 
         text_block = max([len(txt) * 6 for txt in texts])
 
-        def calculate_spacing(breaked: bool):
+        def calculate_spacing(breaked: bool) -> Any:
             sp = valid_width - (text_block * txt_ln)
             if breaked:
                 sp = valid_width - (text_block * (txt_ln / 2))
@@ -179,7 +180,7 @@ class MlxWindow:
             return sp
 
         if (calculate_spacing(False) < 30 or
-            valid_width < text_block * txt_ln):
+           valid_width < text_block * txt_ln):
             breaked = True
 
         spacing = calculate_spacing(breaked)

@@ -2,8 +2,7 @@ from MLX.libmlx import mlx
 import argparse
 from Visualizer import MlxWindow
 from Parser import MapParser
-from CExceptions import MapParserError, InvalidArgument
-from Utils import HexColor_to_decimal
+from CExceptions import MapParserError
 from sys import stderr
 
 CONFIG_PATH = "./config.toml"
