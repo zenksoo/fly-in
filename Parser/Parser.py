@@ -1,5 +1,5 @@
 from CExceptions import MapParserError, MetaDataParserError
-from Utils import (Hub, HubMetaData, Connection,
+from Utils import (Hub, HubMetaData, Connection, HubType,
                    ConnectionMetadata, ZoneTypes, Colors)
 from typing import List, Dict, Any
 from pydantic import ValidationError
@@ -119,7 +119,7 @@ class MapParser:
             positive integer (e.g. nb_drones: 4).")
 
         n = int(nd_match.group("num"))
-        if n <= 0:
+        if n < 0:
             raise MapParserError(f"invalid value '{n}' for 'nb_drones'\n\
             \n\t'nb_drones' must be a positive integer greater than zero.")
         return (n)
@@ -190,7 +190,7 @@ class MapParser:
         except MetaDataParserError as e:
             raise MapParserError(
                 f"{e}\n\
-                \n\tInvalid metadata for 'connection': 'max_link_capacity'"
+                \n\tvalid metadata for 'connection': 'max_link_capacity'"
             )
 
         unexpected_text = re.sub(c_pattern, '', c_match.string)
@@ -206,13 +206,13 @@ class MapParser:
         return Connection(**connection)
 
     @classmethod
-    def from_file(cls, mapfile_path: str | io.TextIOWrapper
+    def from_file(cls, file: str | io.TextIOWrapper
                   ) -> "MapParser":
-        map_file: io.TextIOWrapper = cls._validated_mapfile(mapfile_path)
+        map_file: io.TextIOWrapper = cls._validated_mapfile(file)
 
         nd_drones: int = -1
         hubs: Dict[str, Hub] = {}
-        connection: List[Connection] = []
+        connections: List[Connection] = []
 
         file_content = map_file.readlines()
 
@@ -227,7 +227,7 @@ class MapParser:
 
             hub_pattern = re.compile(
                 r"^(?P<type>start_hub|end_hub|hub):\s*"
-                r"(?P<name>\w+)"
+                r"(?P<name>[^\s]+)"
                 r"(?P<x>\s+-?\d+)?"
                 r"(?P<y>\s+-?\d+)?"
                 r'(?P<metadata>(\s+\[.*\]))?')
@@ -255,6 +255,15 @@ class MapParser:
 
                     if hub_match:
                         hub = cls._hub_handler(hub_match, hub_pattern)
+                        print(hub.name)
+                        if (hub.name in hubs.keys()):
+                            raise MapParserError(
+                                "Doublicate Hub Name"
+                            )
+                        elif ('-' in hub.name):
+                            raise MapParserError(
+                                "invalid hub name the name must not include -"
+                            )
                         hubs[hub.name] = hub
                     else:
                         raise MapParserError(
@@ -265,10 +274,27 @@ class MapParser:
                     connection_match = connection_pattern.match(line)
 
                     if connection_match:
-                        connection.append(
-                            cls._connections_handler(
-                                connection_match, connection_pattern)
-                        )
+                        connection = cls._connections_handler(
+                            connection_match, connection_pattern)
+                        if connection.start not in hubs.keys():
+                            raise MapParserError(
+                                f"unregistered hub '{connection.start}'\n\
+                                \n\tHub must be declared before it can be \
+                                used in a connection"
+                            )
+                        elif connection.end not in hubs.keys():
+                            raise MapParserError(
+                                f"unregistered hub '{connection.end}'\n\
+                                \n\tHub must be declared before it can be \
+                                used in a connection"
+                            )
+                        elif (connection.start == connection.end):
+                            raise MapParserError(
+                                f"invalid connection \
+                                '{connection.start}-{connection.end}'\n\
+                                \n\tA hub cannot be connected to itself."
+                            )
+                        connections.append(connection)
                     else:
                         raise MapParserError(
                             "Invalid Line Format for 'connection'\n\
@@ -282,12 +308,23 @@ class MapParser:
                         'hub', 'end_hub', 'connection'"
                     )
             except MapParserError as e:
-                raise MapParserError(f"MapParserError: Line {i}: {e}")
+                raise MapParserError(f"Line {i}: {e.msg}")
+
+        hubs_type = [hub.type for hub in hubs.values()]
+        if HubType.end_hub not in hubs_type:
+            raise MapParserError(
+                "Missing required hub: 'end_hub'\n\
+                \n\tThe map must define exactly one 'end_hub'.")
+        elif HubType.start_hub not in hubs_type:
+            raise MapParserError(
+                "Missing required hub: 'start_hub'\n\
+                \n\tThe map must define exactly one 'start_hub'."
+            )
 
         map_file.close()
 
         return MapParser(
             nd_drones,
             hubs,
-            connection
+            connections
             )

@@ -78,9 +78,9 @@ class Canvas:
                            replacement_color: Colors | None = None,
                            source_color: Colors | None = None) -> None:
 
-        rainbow_colors = [Colors.red, Colors.pink, Colors.azure, Colors.green,
-                          Colors.blue, Colors.yellow, Colors.salmon,
-                          Colors.orange, Colors.brown, Colors.cyan]
+        rainbow_colors = [Colors.red, Colors.orange, Colors.yellow,
+                          Colors.green,  Colors.blue, Colors.indigo,
+                          Colors.violet]
         rainbow_idx = 0
 
         if isinstance(png, str):

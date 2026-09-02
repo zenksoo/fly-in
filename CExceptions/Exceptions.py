@@ -31,7 +31,9 @@ class ProjectBaseException(Exception):
         self.msg: str = str(args[0])
 
     def __str__(self) -> str:
-        return re.sub(r"( +)", " ", self.msg)
+        print("\033[H\033[J")
+        error_type = f"\033[41m {self.__class__.__name__} \033[49m"
+        return f"{error_type}: {re.sub(r"( +)", " ", self.msg)}"
 
 
 class MapParserError(ProjectBaseException):
