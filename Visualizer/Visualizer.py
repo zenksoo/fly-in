@@ -1,13 +1,14 @@
-from MLX.libmlx import mlx, mlx_image_t, mlx_t
+from MLX.libmlx import *
 from PIL import Image
-from Utils import Hub, Connection, Colors
+from Utils import Drone, Hub, HubType, Connection, Colors
 from typing import List, Tuple, Any
 from Parser import MapParser
 import tomllib
 from typing import Dict
 from .wcfg import WCfg
 from .Canvas import Canvas
-
+import math
+from random import randint
 
 BANNER_PATH = "./Assets/images/banner.png"
 
@@ -15,14 +16,15 @@ BACKGROUND_LAYER = 0
 CONNECTIONS_LAYER = 1
 HUBS_LAYER = 2
 TEXT_LAYER = 3
-BANNER_LAYER = 4
+DRONE_LAYER = 4
+BANNER_LAYER = 5
+
 
 
 class MlxWindow:
     def __init__(self, config_file: str) -> None:
         with open(config_file, "rb") as f:
             data = tomllib.load(f)
-        print(data)
         self.wcfg: WCfg = WCfg(**data["window"])
         self.mlx_ptr: mlx_t
 
@@ -45,8 +47,8 @@ class MlxWindow:
 
     def _add_png_to_window(self, png: str | Image.Image,
                            x: int, y: int, z: int,
-                           target_color: str | int | None = None,
-                           changed_color: str | int | None = None
+                           target_color: Colors | None = None,
+                           changed_color: Colors | None = None
                            ) -> mlx_image_t:
 
         if isinstance(png, str):
@@ -58,7 +60,7 @@ class MlxWindow:
         mlx.mlx_image_to_window(self.mlx_ptr, mlx_img, x, y)
 
         mlx_img.contents.instances[0].z = z
-        Canvas._load_png_to_image(mlx_img, png, changed_color, target_color)
+        Canvas._load_png_to_mlximg(mlx_img, png, 0, 0, changed_color, target_color)
 
         return mlx_img
 
@@ -79,7 +81,7 @@ class MlxWindow:
 
             png = Image.open(hub_png).convert("RGBA")
 
-            Canvas._load_png_to_layer(self.hubs_layer,
+            Canvas._load_png_to_mlximg(self.hubs_layer,
                                       png, hub.x, hub.y,
                                       hub.metadata.color, Colors.hub_source)
 
@@ -163,35 +165,65 @@ class MlxWindow:
         x = self.wcfg.padding_x
         y = self.mlx_ptr.contents.height - int(self.wcfg.padding_y / 2)
 
-        breaked = False
-        txt_ln = len(texts)
+        total_blk = len(texts)
+        break_footer:bool = False
 
         window_width = self.mlx_ptr.contents.width
         valid_width = window_width - (self.wcfg.padding_x * 2)
 
-        text_block = max([len(txt) * 6 for txt in texts])
 
-        def calculate_spacing(breaked: bool) -> Any:
-            sp = valid_width - (text_block * txt_ln)
-            if breaked:
-                sp = valid_width - (text_block * (txt_ln / 2))
 
-            sp = int(sp / (txt_ln + 1))
-            return sp
+        text_blk = max([len(txt) * 6 for txt in texts])
 
-        if (calculate_spacing(False) < 30 or
-           valid_width < text_block * txt_ln):
-            breaked = True
+        total_min_spaces = (total_blk + 1) * 20
 
-        spacing = calculate_spacing(breaked)
+        if text_blk * total_blk + total_min_spaces > valid_width:
+            break_footer = True
 
-        for txt, i in zip(texts, range(txt_ln)):
-            if (breaked and i == txt_ln / 2):
-                y += 26
+        def calculate_spacing(row: int) -> Any:
+            sp = valid_width - (text_blk * row)
+            return int(sp / (row + 1))
+
+        row_items = total_blk
+
+        if break_footer:
+            row_items = (int(total_blk / 2)
+                         if not total_blk % 2 else
+                         int(total_blk / 2) + 1)
+        else:
+            y += 20
+
+        spacing = calculate_spacing(row_items)
+
+        for txt, i in zip(texts, range(total_blk)):
+            if (break_footer and i == row_items):
+                spacing = calculate_spacing(int(total_blk / 2))
+                y += 32
                 x = self.wcfg.padding_x
             x += spacing
             Canvas._draw_text(self.text_layer, txt, x, y)
-            x += text_block
+            x += text_blk
+
+    def _init_nturns_label(self) -> Dict[str, Tuple[int, int]]:
+        st_x = self.wcfg.padding_x - 40
+        end_x = self.wcfg.padding_x + 80
+        st_y = self.wcfg.padding_y - 72
+        end_y = self.wcfg.padding_y - 40
+
+        Canvas._draw_line(self.text_layer, st_x, st_y, end_x, st_y, 2, 0xA2A2A2FF)
+        Canvas._draw_line(self.text_layer, st_x, st_y, st_x, end_y, 2, 0xA2A2A2FF)
+        Canvas._draw_line(self.text_layer, end_x, st_y, end_x, end_y, 2, 0xA2A2A2FF)
+
+        text = "TURN: 00"
+
+        return Canvas._draw_text(self.text_layer, text, st_x + 32, st_y + 15, Colors.white)
+
+    # def _calculate_drone_position_in_hub(
+    #         self, hub: Hub, idx: int) -> Tuple[int, int]:
+
+    #     return (0, 0)
+
+
 
     def init(self, map: MapParser) -> None:
         hubs = list(map.hubs.values())
@@ -209,8 +241,15 @@ class MlxWindow:
 
         banner_img = Image.open(BANNER_PATH).convert("RGBA")
         banner_x = (self.w - banner_img.size[0]) // 2
-        banner_y = 20
+        banner_y = 25
         self._add_png_to_window(banner_img, banner_x, banner_y, BANNER_LAYER)
+
+        self.turns_label = self._init_nturns_label()
+        # Canvas._change_label_content(self.text_layer, self.turns_label, "TURN: 9999")
+
+# need fix to be simple it's looks good in the design that's why i add them :)
+        Canvas._draw_line(self.bg_layer, self.wcfg.padding_x - 40, self.wcfg.padding_y - 40, self.w - self.wcfg.padding_x + 40, self.wcfg.padding_y - 40, 1, 0xA2A2A2A6)
+        Canvas._draw_line(self.bg_layer, self.wcfg.padding_x - 40, self.h - self.wcfg.padding_y + 40, self.w - self.wcfg.padding_x + 40, self. h - self.wcfg.padding_y + 40, 1, 0xA2A2A2A6)
 
         self.render_hubs(hubs)
 
@@ -220,5 +259,62 @@ class MlxWindow:
             f"WIDTH: {self.mlx_ptr.contents.width}",
             f"HEIGHT: {self.mlx_ptr.contents.height}",
             "SPACE: RUN / PAUSE",
-            "STATUS: SOLVED"
+            "|>: SPEED UP",
+            "<|: SLOWER"
         ])
+
+        # setup drones
+        self.drones: Dict[str, Drone] = {}
+        start_hub = [hub for hub in map.hubs.values() if hub.type == HubType.start_hub][0]
+        drone_colors = [
+            Colors.red, Colors.purple, Colors.yellow, Colors.blue,
+            Colors.green, Colors.pink, Colors.brown
+        ]
+        drone_png = Image.open("./Assets/images/Drone.png").convert("RGBA")
+        DImgWidth, DimgHeight = drone_png.size
+
+        print(hubs[0].gfx.w)
+
+        # calculate the position of each drone on hub
+        # we have hub width and height so the total column is width / DImgWidth
+        # and total rows is height / DImgHeight
+        # and i will put extra drone that his position is out the hub on each other in last position
+        nColumns = int(hubs[0].gfx.w / DImgWidth)
+        nRows = int(hubs[0].gfx.h / DimgHeight)
+
+        fullRows = math.ceil(map.ndrones / nColumns)
+        if fullRows > nRows:
+            fullRows = nRows
+        fullColumns = nColumns if map.ndrones > nColumns else map.ndrones
+
+        st_y = int((hubs[0].gfx.h - (DimgHeight * fullRows)) / 2)
+        st_x = int((hubs[0].gfx.w - (DImgWidth * fullColumns)) / 2)
+
+        xidx = 0
+        yidx = 0
+
+        for i in range(map.ndrones):
+            drone = Drone(f"D{i + 1}")
+            if i >= len(drone_colors):
+                drone_color = drone_colors[randint(0, len(drone_colors) - 1)]
+            else: drone_color = drone_colors[i]
+
+            drone.cord = (start_hub.x + st_x + DImgWidth * xidx,
+                          start_hub.y + st_y + DimgHeight * yidx)
+            drone.mlximg = self._add_png_to_window(drone_png, drone.cord[0],
+                drone.cord[1], DRONE_LAYER + i, Colors.blue, drone_color)
+
+            self.drones[drone.id] = drone
+
+
+            if xidx == nColumns - 1 and i + 1 < nRows * nColumns:
+                xidx = 0
+                yidx += 1
+            elif i + 1 < nRows * nColumns:
+                xidx += 1
+
+
+
+
+    def engine(self, map: MapParser, solution: List[List[str]]) ->None:
+        pass

@@ -24,10 +24,14 @@ def main() -> None:
     try:
         map_data: MapParser = MapParser.from_file(args.map)
 
-        print(map_data.hubs)
         window = MlxWindow(CONFIG_PATH)
 
         window.init(map_data)
+        print(map_data.hubs)
+
+        solution = [["D1-waypoint1"]]
+
+        window.engine(map_data, solution)
 
         mlx.mlx_loop(window.mlx_ptr)
     except MapParserError as e:

@@ -2,12 +2,16 @@
 title          = "Fly-In"
 resizing       = true
 min_width      = 600
+
 bg_color       = 0x151515ff
+#bg_color       = 0x0E0E0EFF
 bg_points_effect= 0x919191ff
 text_color     = 0xffffffff
+
 enable_hub_name= true
 enable_connection_txt = true
-x_gap       = 45
+
+x_gap       = 35
 y_gap        = 92
 padding_x      = 64
 padding_y      = 140

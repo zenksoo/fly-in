@@ -38,42 +38,7 @@ class Canvas:
                 Canvas._fill_pixel(img, x, y, decimal_pxcolor)
 
     @staticmethod
-    def _load_png_to_image(img: mlx_image_t,
-                           png: str | Image.Image,
-                           replacement_color: str | int | None = None,
-                           source_color: str | int | None = None) -> None:
-        if isinstance(png, str):
-            png = Image.open(png).convert("RGBA")
-
-        if isinstance(replacement_color, str):
-            try:
-                replacement_color = HexColor_to_decimal(replacement_color)
-            except Exception:
-                raise CanvasError(
-                    "invalid value to HexColor_to_decimal method\n\
-                    \n\tvalue must be a valid hex color format as \
-                    string (e.g #00ff00).")
-
-        if isinstance(source_color, str):
-            try:
-                source_color = HexColor_to_decimal(source_color)
-            except Exception:
-                raise CanvasError(
-                    "invalid value to HexColor_to_decimal method\n\
-                    \n\tvalue must be a valid hex color format as \
-                    string (e.g #00ff00).")
-
-        for y in range(img.contents.height):
-            for x in range(img.contents.width):
-                pixel_color = pack_rgba(*png.getpixel((x, y)))
-                if (replacement_color and source_color and
-                   pixel_color == source_color):
-                    pixel_color = replacement_color
-
-                Canvas._fill_pixel(img, x, y, pixel_color)
-
-    @staticmethod
-    def _load_png_to_layer(layer: mlx_image_t,
+    def _load_png_to_mlximg(layer: mlx_image_t,
                            png: str | Image.Image, x: int, y: int,
                            replacement_color: Colors | None = None,
                            source_color: Colors | None = None) -> None:
@@ -108,7 +73,7 @@ class Canvas:
     @staticmethod
     def _draw_text(layer: mlx_image_t,
                    txt: str, txt_x: int, txt_y: int,
-                   color: int | None = None
+                   color: Colors | int | None = None
                    ) -> Dict[str, Tuple[int, int]]:
 
         def draw_char(img: mlx_image_t,
@@ -130,6 +95,11 @@ class Canvas:
             elif char in DIGITS:
                 png = Image.open("./Assets/fonts/digits.png")
                 glyph_x = DIGITS.index(char)
+            else:
+                char = '.'
+                png = Image.open("./Assets/fonts/digits.png")
+                glyph_x = DIGITS.index(char)
+
 
             glyph_x = glyph_x * 6
             img_x = char_idx * 6
@@ -147,7 +117,6 @@ class Canvas:
 
         if isinstance(color, Colors):
             color = color.value
-
         for idx, char in enumerate(txt):
             draw_char(layer, char, idx, txt_x, txt_y, color)
 
@@ -211,3 +180,13 @@ class Canvas:
             if e2 < dx:
                 err += dx
                 y0 += sy
+
+    @staticmethod
+    def _change_label_content(
+        layer: mlx_image_t,
+        label_coord: Dict[str, Tuple[int, int]],
+        new_content: str) ->None:
+
+        Canvas._delete_text(layer, label_coord["start"], label_coord["end"])
+        Canvas._draw_text(layer, new_content, label_coord["start"][0],
+                          label_coord["start"][1])

@@ -37,6 +37,10 @@ class MapParser:
         return file
 
     @staticmethod
+    def _extra_check(hubs: Dict[str, Hub])->None:
+        pass
+
+    @staticmethod
     def _metadata_pattern(pattern: re.Pattern, match: re.Match) -> None:
         match_source = re.sub(pattern, "", match.string).strip()
         match_source = re.sub(r'\s+', " ", match_source)
@@ -98,7 +102,10 @@ class MapParser:
                 raise MetaDataParserError(
                     f"unknown metadata property '{key}'\n")
             if key == "zone":
-                metadata_dict[key] = ZoneTypes[val]
+                try:
+                    metadata_dict[key] = ZoneTypes[val]
+                except KeyError:
+                    raise MapParserError("invalide zone type")
             elif key == "color":
                 metadata_dict[key] = Colors[val]
             else:
@@ -129,14 +136,8 @@ class MapParser:
                      ) -> Hub:
         hub: Dict[str, Any] = hub_match.groupdict()
 
-        if not hub["x"] and not hub["y"]:
-            raise MapParserError("Missing Hub Coordinate (x, y)")
-
-        elif not hub["y"]:
-            raise MapParserError("Missing y axis corrdinate for hub")
-        else:
-            hub["x"] = int(hub["x"])
-            hub["y"] = int(hub["y"])
+        hub["x"] = int(hub["x"])
+        hub["y"] = int(hub["y"])
 
         if not hub["metadata"]:
             MapParser._metadata_pattern(hub_pattern, hub_match)
@@ -155,7 +156,7 @@ class MapParser:
                     \n\t'max_drones' must be a valid positive integer")
         except MetaDataParserError as e:
             raise MapParserError(
-                f"{e}\n\
+                f"{e.msg}\n\
                 \n\tValid metadata for 'hub': 'color', 'max_drones', 'zone'")
 
         unexpected_text = re.sub(hub_pattern, '', hub_match.string)
@@ -189,7 +190,7 @@ class MapParser:
                     'max_link_capacity' must be a valid positive integer")
         except MetaDataParserError as e:
             raise MapParserError(
-                f"{e}\n\
+                f"{e.msg}\n\
                 \n\tvalid metadata for 'connection': 'max_link_capacity'"
             )
 
@@ -228,13 +229,13 @@ class MapParser:
             hub_pattern = re.compile(
                 r"^(?P<type>start_hub|end_hub|hub):\s*"
                 r"(?P<name>[^\s]+)"
-                r"(?P<x>\s+-?\d+)?"
-                r"(?P<y>\s+-?\d+)?"
+                r"(?P<x>\s+-?\d+)"
+                r"(?P<y>\s+-?\d+)"
                 r'(?P<metadata>(\s+\[.*\]))?')
 
             connection_pattern = re.compile(
                 r"^connection\s*:\s+"
-                r"(?P<start>\w+)"
+                r"(?P<start>[^\s]+)"
                 r"(?P<sep>-)"
                 r"(?P<end>\w+)"
                 r'(?P<metadata>\s+\[(?P<m_content>.*)\])?'
@@ -251,11 +252,12 @@ class MapParser:
                             "Invalid Line Format for 'nb_drones'\n\n\t\
                             'nb_drones' expects: nb_drones: <positive_int>")
                 elif re.match(r"^(start_hub|end_hub|hub)", line):
+                    if nd_drones == -1:
+                        raise MapParserError("The first line must define the number of drones")
                     hub_match = hub_pattern.match(line)
 
                     if hub_match:
                         hub = cls._hub_handler(hub_match, hub_pattern)
-                        print(hub.name)
                         if (hub.name in hubs.keys()):
                             raise MapParserError(
                                 "Doublicate Hub Name"
@@ -276,6 +278,7 @@ class MapParser:
                     if connection_match:
                         connection = cls._connections_handler(
                             connection_match, connection_pattern)
+
                         if connection.start not in hubs.keys():
                             raise MapParserError(
                                 f"unregistered hub '{connection.start}'\n\
@@ -294,6 +297,11 @@ class MapParser:
                                 '{connection.start}-{connection.end}'\n\
                                 \n\tA hub cannot be connected to itself."
                             )
+                        elif (([connection.start, connection.end] in
+                              [[c.start, c.end] for c in connections]) or
+                              ([connection.end, connection.start] in
+                              [[c.start, c.end] for c in connections])):
+                            continue
                         connections.append(connection)
                     else:
                         raise MapParserError(
@@ -310,18 +318,8 @@ class MapParser:
             except MapParserError as e:
                 raise MapParserError(f"Line {i}: {e.msg}")
 
-        hubs_type = [hub.type for hub in hubs.values()]
-        if HubType.end_hub not in hubs_type:
-            raise MapParserError(
-                "Missing required hub: 'end_hub'\n\
-                \n\tThe map must define exactly one 'end_hub'.")
-        elif HubType.start_hub not in hubs_type:
-            raise MapParserError(
-                "Missing required hub: 'start_hub'\n\
-                \n\tThe map must define exactly one 'start_hub'."
-            )
-
         map_file.close()
+        cls._extra_check(hubs)
 
         return MapParser(
             nd_drones,

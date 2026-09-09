@@ -33,6 +33,13 @@ def HexColor_to_decimal(hex_color: str) -> int:
             "Invalid HexDecimal Value, (e.g #fff #ffffff #ffff #ffffffff)")
 
 
+class Drone:
+    def __init__(self, id) -> None:
+        self.id = id
+        self.cord: Tuple[int, int]
+        self.mlximg = None
+
+
 class HubMetaData(BaseModel):
     color: Colors = Colors.green
     zone: ZoneTypes = ZoneTypes.normal
