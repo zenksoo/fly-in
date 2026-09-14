@@ -1,7 +1,7 @@
 from MLX.libmlx import mlx_image_t
 from PIL import Image
-from Utils import HexColor_to_decimal, pack_rgba, Colors
-from CExceptions import CanvasError
+from Utils import pack_rgba, Colors
+# from CExceptions import CanvasError
 from typing import Dict, Tuple
 
 
@@ -39,9 +39,9 @@ class Canvas:
 
     @staticmethod
     def _load_png_to_mlximg(layer: mlx_image_t,
-                           png: str | Image.Image, x: int, y: int,
-                           replacement_color: Colors | None = None,
-                           source_color: Colors | None = None) -> None:
+                            png: str | Image.Image, x: int, y: int,
+                            replacement_color: Colors | None = None,
+                            source_color: Colors | None = None) -> None:
 
         rainbow_colors = [Colors.red, Colors.orange, Colors.yellow,
                           Colors.green,  Colors.blue, Colors.indigo,
@@ -99,7 +99,6 @@ class Canvas:
                 char = '.'
                 png = Image.open("./Assets/fonts/digits.png")
                 glyph_x = DIGITS.index(char)
-
 
             glyph_x = glyph_x * 6
             img_x = char_idx * 6
@@ -183,9 +182,9 @@ class Canvas:
 
     @staticmethod
     def _change_label_content(
-        layer: mlx_image_t,
-        label_coord: Dict[str, Tuple[int, int]],
-        new_content: str) ->None:
+            layer: mlx_image_t,
+            label_coord: Dict[str, Tuple[int, int]],
+            new_content: str) -> None:
 
         Canvas._delete_text(layer, label_coord["start"], label_coord["end"])
         Canvas._draw_text(layer, new_content, label_coord["start"][0],

@@ -1,10 +1,10 @@
 [window]
 title          = "Fly-In"
-resizing       = true
+resizing       = false
 min_width      = 600
 
-bg_color       = 0x151515ff
-#bg_color       = 0x0E0E0EFF
+#bg_color       = 0x151515ff
+bg_color       = 0x1B1B1BFF
 bg_points_effect= 0x919191ff
 text_color     = 0xffffffff
 

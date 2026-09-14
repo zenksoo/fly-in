@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, ConfigDict
 from .Types import ZoneTypes, HubType, Colors
 from typing import Tuple
+from MLX import mlx_image_t
 
 
 def pack_rgba(r: int, g: int, b: int, a: int) -> int:
@@ -37,7 +38,7 @@ class Drone:
     def __init__(self, id) -> None:
         self.id = id
         self.cord: Tuple[int, int]
-        self.mlximg = None
+        self.mlximg: mlx_image_t
 
 
 class HubMetaData(BaseModel):

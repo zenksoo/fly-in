@@ -1,4 +1,4 @@
-from MLX.libmlx import *
+from MLX import mlx, mlx_t, mlx_image_t
 from PIL import Image
 from Utils import Drone, Hub, HubType, Connection, Colors
 from typing import List, Tuple, Any
@@ -229,6 +229,7 @@ class MlxWindow:
         hubs = list(map.hubs.values())
 
         self.w, self.h = self._get_window_resolution(self.wcfg, hubs)
+        print(self.w, self.h)
 
         self.mlx_ptr = mlx.mlx_init(self.w, self.h,
                                     bytes(self.wcfg.title, "utf-8"),

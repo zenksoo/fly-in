@@ -1,5 +1,5 @@
 from CExceptions import MapParserError, MetaDataParserError
-from Utils import (Hub, HubMetaData, Connection, HubType,
+from Utils import (Hub, HubMetaData, Connection,
                    ConnectionMetadata, ZoneTypes, Colors)
 from typing import List, Dict, Any
 from pydantic import ValidationError
@@ -37,7 +37,7 @@ class MapParser:
         return file
 
     @staticmethod
-    def _extra_check(hubs: Dict[str, Hub])->None:
+    def _extra_check(hubs: Dict[str, Hub]) -> None:
         pass
 
     @staticmethod
@@ -253,7 +253,8 @@ class MapParser:
                             'nb_drones' expects: nb_drones: <positive_int>")
                 elif re.match(r"^(start_hub|end_hub|hub)", line):
                     if nd_drones == -1:
-                        raise MapParserError("The first line must define the number of drones")
+                        raise MapParserError(
+                            "The first line must define the number of drones")
                     hub_match = hub_pattern.match(line)
 
                     if hub_match:
