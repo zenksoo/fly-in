@@ -35,7 +35,7 @@ def HexColor_to_decimal(hex_color: str) -> int:
 
 
 class Drone:
-    def __init__(self, id) -> None:
+    def __init__(self, id: str) -> None:
         self.id = id
         self.cord: Tuple[int, int]
         self.mlximg: mlx_image_t

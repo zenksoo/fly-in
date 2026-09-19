@@ -3,9 +3,10 @@ from PIL import Image
 from Utils import pack_rgba, Colors
 # from CExceptions import CanvasError
 from typing import Dict, Tuple
+import math
 
 
-class Canvas:
+class MlxCanvas:
     @staticmethod
     def _fill_pixel(img: mlx_image_t,
                     x: int, y: int,
@@ -35,7 +36,7 @@ class Canvas:
                     decimal_pxcolor = _pick_color(bg_point_effect)
                 else:
                     decimal_pxcolor = _pick_color(color)
-                Canvas._fill_pixel(img, x, y, decimal_pxcolor)
+                MlxCanvas._fill_pixel(img, x, y, decimal_pxcolor)
 
     @staticmethod
     def _load_png_to_mlximg(layer: mlx_image_t,
@@ -68,7 +69,7 @@ class Canvas:
                     else:
                         color = replacement_color.value
 
-                Canvas._fill_pixel(layer, x + png_x, y + png_y, color)
+                MlxCanvas._fill_pixel(layer, x + png_x, y + png_y, color)
 
     @staticmethod
     def _draw_text(layer: mlx_image_t,
@@ -111,7 +112,7 @@ class Canvas:
 
                         pixel_color = replacement_color
 
-                    Canvas._fill_pixel(img, img_x + x + layer_x,
+                    MlxCanvas._fill_pixel(img, img_x + x + layer_x,
                                        y + layer_y, pixel_color)
 
         if isinstance(color, Colors):
@@ -132,53 +133,73 @@ class Canvas:
 
         for y in range(start[1], end[1] + 1):
             for x in range(start[0], end[0] + 1):
-                Canvas._fill_pixel(text_layer, x, y, 0x00000000)
+                MlxCanvas._fill_pixel(text_layer, x, y, 0x00000000)
+
 
     @staticmethod
-    def _draw_line(img: mlx_image_t, x0: int, y0: int,
-                   x1: int, y1: int, width: int,
-                   color: int) -> None:
-        dx = abs(x1 - x0)
-        dy = abs(y1 - y0)
-        sx = 1 if x0 < x1 else -1
-        sy = 1 if y0 < y1 else -1
-        err = dx - dy
+    def _draw_circle(layer: mlx_image_t, cx: int, cy: int, r: int, pixel_color: int) -> None:
+        x = 0
+        y = -r
 
-        # Calculate perpendicular offsets for thickness
-        # length provides normalization for the width scaling
-        import math
-        length = math.sqrt(dx*dx + dy*dy)
-        if length == 0:
+        if not r:
+            MlxCanvas._fill_pixel(layer,cx, cy, pixel_color)
             return
 
-        # Standard integer scaling for thickness offsets
-        # x_offset and y_offset define the thickness direction
-        # We multiply by (width - 1) / 2 to center the line
-        # w_factor = (width - 1) / (2.0 * length)
-        # x_offset = int(dy * w_factor)
-        # y_offset = int(dx * w_factor)
+        while (x < -y):
+            midp = y + 0.5
+            c = midp*midp + x*x
 
-        while True:
-            # Instead of drawing one pixel, draw a perpendicular span
-            # to create the desired width
-            for w in range(-int(width/2), int((width+1)/2)):
-                # Offset the pixel perpendicular to the line direction
-                px = w * (1 if dy > dx else 0) * (-sy if sx > 0 else sy)
-                px += x0
-                py = w * (1 if dx >= dy else 0) * (sx if sy > 0 else -sx)
-                py += y0
-                Canvas._fill_pixel(img, px, py, color)
+            if c > r*r:
+                y += 1
 
-            if x0 == x1 and y0 == y1:
-                break
+            MlxCanvas._fill_pixel(layer, cx + x, cy + y, pixel_color)
+            MlxCanvas._fill_pixel(layer, cx + x, cy - y, pixel_color)
+            MlxCanvas._fill_pixel(layer, cx - x, cy + y, pixel_color)
+            MlxCanvas._fill_pixel(layer, cx - x, cy - y, pixel_color)
 
-            e2 = 2 * err
-            if e2 > -dy:
-                err -= dy
-                x0 += sx
-            if e2 < dx:
-                err += dx
-                y0 += sy
+            MlxCanvas._fill_pixel(layer, cx + y, cy + x, pixel_color)
+            MlxCanvas._fill_pixel(layer, cx - y, cy - x, pixel_color)
+            MlxCanvas._fill_pixel(layer, cx - y, cy + x, pixel_color)
+            MlxCanvas._fill_pixel(layer, cx + y, cy - x, pixel_color)
+
+
+            for i in range(cx - x, cx + x + 1):
+                MlxCanvas._fill_pixel(layer, i, cy + y, pixel_color)
+                MlxCanvas._fill_pixel(layer, i, cy - y, pixel_color)
+
+            for i in range(cx + y, cx - y):
+                MlxCanvas._fill_pixel(layer, i, cy + x, pixel_color)
+                MlxCanvas._fill_pixel(layer, i, cy - x, pixel_color)
+
+            x += 1
+
+
+    @staticmethod
+    def _draw_line(layer: mlx_image_t, x0: int, y0: int,
+                   x1: int, y1: int, thickness: int,
+                   pixel_color: int) -> None:
+
+        sx = x1 - x0
+        sy = y1 - y0
+
+        step = max(abs(sx), abs(sy))
+
+        if not step: return
+
+        dx = sx / step
+        dy = sy / step
+
+        half = thickness // 2
+        vx = -dy
+        vy = dx
+
+        for i in range(-half, half + 1):
+            x = round(x0 + (vx * i))
+            y = round(y0 + (vy * i))
+            for i in range(step):
+                MlxCanvas._draw_circle(layer, round(x), round(y), 1, pixel_color)
+                x += dx
+                y += dy
 
     @staticmethod
     def _change_label_content(
@@ -186,6 +207,6 @@ class Canvas:
             label_coord: Dict[str, Tuple[int, int]],
             new_content: str) -> None:
 
-        Canvas._delete_text(layer, label_coord["start"], label_coord["end"])
-        Canvas._draw_text(layer, new_content, label_coord["start"][0],
+        MlxCanvas._delete_text(layer, label_coord["start"], label_coord["end"])
+        MlxCanvas._draw_text(layer, new_content, label_coord["start"][0],
                           label_coord["start"][1])

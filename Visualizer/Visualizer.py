@@ -6,7 +6,7 @@ from Parser import MapParser
 import tomllib
 from typing import Dict
 from .wcfg import WCfg
-from .Canvas import Canvas
+from .Canvas import MlxCanvas
 import math
 from random import randint
 
@@ -18,7 +18,6 @@ HUBS_LAYER = 2
 TEXT_LAYER = 3
 DRONE_LAYER = 4
 BANNER_LAYER = 5
-
 
 
 class MlxWindow:
@@ -60,7 +59,8 @@ class MlxWindow:
         mlx.mlx_image_to_window(self.mlx_ptr, mlx_img, x, y)
 
         mlx_img.contents.instances[0].z = z
-        Canvas._load_png_to_mlximg(mlx_img, png, 0, 0, changed_color, target_color)
+        MlxCanvas._load_png_to_mlximg(mlx_img, png, 0, 0,
+                                   changed_color, target_color)
 
         return mlx_img
 
@@ -81,18 +81,18 @@ class MlxWindow:
 
             png = Image.open(hub_png).convert("RGBA")
 
-            Canvas._load_png_to_mlximg(self.hubs_layer,
-                                      png, hub.x, hub.y,
-                                      hub.metadata.color, Colors.hub_source)
+            MlxCanvas._load_png_to_mlximg(self.hubs_layer,
+                                       png, hub.x, hub.y,
+                                       hub.metadata.color, Colors.hub_source)
 
             hub.gfx.w, hub.gfx.h = png.size
 
             if self.wcfg.enable_hub_name:
-                hub.gfx.top_label = Canvas._draw_text(
+                hub.gfx.top_label = MlxCanvas._draw_text(
                     self.text_layer, hub.name, hub.x, hub.y - 12,
                     self.wcfg.text_color)
 
-            hub.gfx.bottom_label = Canvas._draw_text(
+            hub.gfx.bottom_label = MlxCanvas._draw_text(
                 self.text_layer,
                 f"00/{hub.metadata.max_drones}",
                 hub.x,
@@ -147,7 +147,7 @@ class MlxWindow:
 
             width = con.metadata.max_link_capacity
             width *= (16 - (2 * con.metadata.max_link_capacity))
-            Canvas._draw_line(
+            MlxCanvas._draw_line(
                 self.connections_layer, sx, sy, ex, ey, width, color)
 
             if self.wcfg.enable_connection_txt:
@@ -156,7 +156,7 @@ class MlxWindow:
 
                 text_x += sx if sx < ex else ex
                 text_y += sy if sy < ey else ey
-                Canvas._draw_text(
+                MlxCanvas._draw_text(
                     self.text_layer,
                     f"0{con.metadata.max_link_capacity}",
                     text_x, text_y, self.wcfg.text_color)
@@ -166,12 +166,10 @@ class MlxWindow:
         y = self.mlx_ptr.contents.height - int(self.wcfg.padding_y / 2)
 
         total_blk = len(texts)
-        break_footer:bool = False
+        break_footer: bool = False
 
         window_width = self.mlx_ptr.contents.width
         valid_width = window_width - (self.wcfg.padding_x * 2)
-
-
 
         text_blk = max([len(txt) * 6 for txt in texts])
 
@@ -201,7 +199,7 @@ class MlxWindow:
                 y += 32
                 x = self.wcfg.padding_x
             x += spacing
-            Canvas._draw_text(self.text_layer, txt, x, y)
+            MlxCanvas._draw_text(self.text_layer, txt, x, y)
             x += text_blk
 
     def _init_nturns_label(self) -> Dict[str, Tuple[int, int]]:
@@ -210,20 +208,22 @@ class MlxWindow:
         st_y = self.wcfg.padding_y - 72
         end_y = self.wcfg.padding_y - 40
 
-        Canvas._draw_line(self.text_layer, st_x, st_y, end_x, st_y, 2, 0xA2A2A2FF)
-        Canvas._draw_line(self.text_layer, st_x, st_y, st_x, end_y, 2, 0xA2A2A2FF)
-        Canvas._draw_line(self.text_layer, end_x, st_y, end_x, end_y, 2, 0xA2A2A2FF)
+        MlxCanvas._draw_line(self.text_layer, st_x, st_y, end_x, st_y,
+                          2, 0xA2A2A2FF)
+        MlxCanvas._draw_line(self.text_layer, st_x, st_y, st_x, end_y,
+                          2, 0xA2A2A2FF)
+        MlxCanvas._draw_line(self.text_layer, end_x, st_y, end_x, end_y,
+                          2, 0xA2A2A2FF)
 
         text = "TURN: 00"
 
-        return Canvas._draw_text(self.text_layer, text, st_x + 32, st_y + 15, Colors.white)
+        return MlxCanvas._draw_text(self.text_layer, text, st_x + 32, st_y + 15,
+                                 Colors.white)
 
     # def _calculate_drone_position_in_hub(
     #         self, hub: Hub, idx: int) -> Tuple[int, int]:
 
     #     return (0, 0)
-
-
 
     def init(self, map: MapParser) -> None:
         hubs = list(map.hubs.values())
@@ -237,7 +237,7 @@ class MlxWindow:
         self.bg_layer = self._create_layer(BACKGROUND_LAYER)
         self.text_layer = self._create_layer(TEXT_LAYER)
 
-        Canvas._fill_window_bg(self.bg_layer, self.wcfg.bg_color,
+        MlxCanvas._fill_window_bg(self.bg_layer, self.wcfg.bg_color,
                                self.wcfg.bg_points_effect)
 
         banner_img = Image.open(BANNER_PATH).convert("RGBA")
@@ -246,11 +246,18 @@ class MlxWindow:
         self._add_png_to_window(banner_img, banner_x, banner_y, BANNER_LAYER)
 
         self.turns_label = self._init_nturns_label()
-        # Canvas._change_label_content(self.text_layer, self.turns_label, "TURN: 9999")
+        # Canvas._change_label_content(self.text_layer,
+        # self.turns_label, "TURN: 9999")
 
 # need fix to be simple it's looks good in the design that's why i add them :)
-        Canvas._draw_line(self.bg_layer, self.wcfg.padding_x - 40, self.wcfg.padding_y - 40, self.w - self.wcfg.padding_x + 40, self.wcfg.padding_y - 40, 1, 0xA2A2A2A6)
-        Canvas._draw_line(self.bg_layer, self.wcfg.padding_x - 40, self.h - self.wcfg.padding_y + 40, self.w - self.wcfg.padding_x + 40, self. h - self.wcfg.padding_y + 40, 1, 0xA2A2A2A6)
+        MlxCanvas._draw_line(self.bg_layer, self.wcfg.padding_x - 40,
+                          self.wcfg.padding_y - 40,
+                          self.w - self.wcfg.padding_x + 40,
+                          self.wcfg.padding_y - 40, 1, 0xA2A2A2A6)
+        MlxCanvas._draw_line(self.bg_layer, self.wcfg.padding_x - 40,
+                          self.h - self.wcfg.padding_y + 40,
+                          self.w - self.wcfg.padding_x + 40,
+                          self. h - self.wcfg.padding_y + 40, 1, 0xA2A2A2A6)
 
         self.render_hubs(hubs)
 
@@ -266,7 +273,9 @@ class MlxWindow:
 
         # setup drones
         self.drones: Dict[str, Drone] = {}
-        start_hub = [hub for hub in map.hubs.values() if hub.type == HubType.start_hub][0]
+        start_hub = [
+            hub for hub in map.hubs.values() if hub.type == HubType.start_hub
+            ][0]
         drone_colors = [
             Colors.red, Colors.purple, Colors.yellow, Colors.blue,
             Colors.green, Colors.pink, Colors.brown
@@ -279,7 +288,8 @@ class MlxWindow:
         # calculate the position of each drone on hub
         # we have hub width and height so the total column is width / DImgWidth
         # and total rows is height / DImgHeight
-        # and i will put extra drone that his position is out the hub on each other in last position
+        # and i will put extra drone that his position is out the hub on each
+        # other in last position
         nColumns = int(hubs[0].gfx.w / DImgWidth)
         nRows = int(hubs[0].gfx.h / DimgHeight)
 
@@ -298,15 +308,16 @@ class MlxWindow:
             drone = Drone(f"D{i + 1}")
             if i >= len(drone_colors):
                 drone_color = drone_colors[randint(0, len(drone_colors) - 1)]
-            else: drone_color = drone_colors[i]
+            else:
+                drone_color = drone_colors[i]
 
             drone.cord = (start_hub.x + st_x + DImgWidth * xidx,
                           start_hub.y + st_y + DimgHeight * yidx)
-            drone.mlximg = self._add_png_to_window(drone_png, drone.cord[0],
+            drone.mlximg = self._add_png_to_window(
+                drone_png, drone.cord[0],
                 drone.cord[1], DRONE_LAYER + i, Colors.blue, drone_color)
 
             self.drones[drone.id] = drone
-
 
             if xidx == nColumns - 1 and i + 1 < nRows * nColumns:
                 xidx = 0
@@ -314,8 +325,5 @@ class MlxWindow:
             elif i + 1 < nRows * nColumns:
                 xidx += 1
 
-
-
-
-    def engine(self, map: MapParser, solution: List[List[str]]) ->None:
+    def engine(self, map: MapParser, solution: List[List[str]]) -> None:
         pass

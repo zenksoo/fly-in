@@ -4,7 +4,7 @@ resizing       = false
 min_width      = 600
 
 #bg_color       = 0x151515ff
-bg_color       = 0x1B1B1BFF
+bg_color       = 0x000000ff
 bg_points_effect= 0x919191ff
 text_color     = 0xffffffff
 
