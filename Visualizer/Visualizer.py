@@ -27,23 +27,6 @@ class MlxWindow:
         self.wcfg: WCfg = WCfg(**data["window"])
         self.mlx_ptr: mlx_t
 
-    def _create_layer(self, z: int, width: int | None = None,
-                      height: int | None = None) -> mlx_image_t:
-
-        if not width:
-            width = self.mlx_ptr.contents.width
-
-        if not height:
-            height = self.mlx_ptr.contents.height
-
-        img: mlx_image_t = mlx.mlx_new_image(
-            self.mlx_ptr, width, height)
-        mlx.mlx_image_to_window(self.mlx_ptr, img, 0, 0)
-
-        img.contents.instances[0].z = z
-
-        return img
-
     def _add_png_to_window(self, png: str | Image.Image,
                            x: int, y: int, z: int,
                            target_color: Colors | None = None,
@@ -65,16 +48,17 @@ class MlxWindow:
         return mlx_img
 
     def render_hubs(self, hubs: List[Hub]) -> None:
-        self.hubs_layer = self._create_layer(HUBS_LAYER)
+        self.hubs_layer = MlxCanvas._create_layer(self.mlx_ptr, HUBS_LAYER)
+
 
         for hub in hubs:
-            hub_png: str = "./Assets/images/hub_normal.png"
+            hub_png: str = f"{self.wcfg.assets_path}/hub_normal.png"
             if hub.metadata.zone == "priority":
-                hub_png = "./Assets/images/hub_priority.png"
+                hub_png = f"{self.wcfg.assets_path}/hub_priority.png"
             elif hub.metadata.zone == "restricted":
-                hub_png = "./Assets/images/hub_restricted.png"
+                hub_png = f"{self.wcfg.assets_path}/hub_restricted.png"
             elif hub.metadata.zone == "blocked":
-                hub_png = "./Assets/images/hub_blocked.png"
+                hub_png = f"{self.wcfg.assets_path}/hub_blocked.png"
 
             hub.x = self.wcfg.padding_x + hub.x * (80 + self.wcfg.x_gap)
             hub.y = self.wcfg.padding_y + hub.y * (80 + self.wcfg.y_gap)
@@ -90,14 +74,14 @@ class MlxWindow:
             if self.wcfg.enable_hub_name:
                 hub.gfx.top_label = MlxCanvas._draw_text(
                     self.text_layer, hub.name, hub.x, hub.y - 12,
-                    self.wcfg.text_color)
+                    self.wcfg.font_color)
 
             hub.gfx.bottom_label = MlxCanvas._draw_text(
                 self.text_layer,
                 f"00/{hub.metadata.max_drones}",
                 hub.x,
                 hub.y + hub.gfx.h + 4,
-                self.wcfg.text_color)
+                self.wcfg.font_color)
 
     @staticmethod
     def _get_window_resolution(cfg: WCfg, hubs: List[Hub]) -> Tuple[int, int]:
@@ -132,7 +116,7 @@ class MlxWindow:
     def render_connections(self,
                            connections: List[Connection],
                            hubs: Dict[str, Hub]) -> None:
-        self.connections_layer = self._create_layer(CONNECTIONS_LAYER)
+        self.connections_layer = MlxCanvas._create_layer(self.mlx_ptr, CONNECTIONS_LAYER)
 
         color = 0xFFFFFF62
         for con in connections:
@@ -159,7 +143,7 @@ class MlxWindow:
                 MlxCanvas._draw_text(
                     self.text_layer,
                     f"0{con.metadata.max_link_capacity}",
-                    text_x, text_y, self.wcfg.text_color)
+                    text_x, text_y, self.wcfg.font_color)
 
     def _window_footer(self, texts: List[str]) -> None:
         x = self.wcfg.padding_x
@@ -234,8 +218,8 @@ class MlxWindow:
         self.mlx_ptr = mlx.mlx_init(self.w, self.h,
                                     bytes(self.wcfg.title, "utf-8"),
                                     self.wcfg.resizing)
-        self.bg_layer = self._create_layer(BACKGROUND_LAYER)
-        self.text_layer = self._create_layer(TEXT_LAYER)
+        self.bg_layer = MlxCanvas._create_layer(self.mlx_ptr, BACKGROUND_LAYER)
+        self.text_layer = MlxCanvas._create_layer(self.mlx_ptr, TEXT_LAYER)
 
         MlxCanvas._fill_window_bg(self.bg_layer, self.wcfg.bg_color,
                                self.wcfg.bg_points_effect)
@@ -246,8 +230,6 @@ class MlxWindow:
         self._add_png_to_window(banner_img, banner_x, banner_y, BANNER_LAYER)
 
         self.turns_label = self._init_nturns_label()
-        # Canvas._change_label_content(self.text_layer,
-        # self.turns_label, "TURN: 9999")
 
 # need fix to be simple it's looks good in the design that's why i add them :)
         MlxCanvas._draw_line(self.bg_layer, self.wcfg.padding_x - 40,

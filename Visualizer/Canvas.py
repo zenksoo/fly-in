@@ -1,4 +1,4 @@
-from MLX.libmlx import mlx_image_t
+from MLX.libmlx import mlx, mlx_image_t, mlx_t
 from PIL import Image
 from Utils import pack_rgba, Colors
 # from CExceptions import CanvasError
@@ -8,7 +8,7 @@ import math
 
 class MlxCanvas:
     @staticmethod
-    def _fill_pixel(img: mlx_image_t,
+    def _put_pixel(img: mlx_image_t,
                     x: int, y: int,
                     pixel_color: int) -> None:
         idx = (y * img.contents.width + x) * 4
@@ -16,6 +16,24 @@ class MlxCanvas:
         img.contents.pixels[idx + 1] = pixel_color >> 16 & 0xFF
         img.contents.pixels[idx + 2] = pixel_color >> 8 & 0xFF
         img.contents.pixels[idx + 3] = pixel_color & 0xFF
+
+    @staticmethod
+    def _create_layer(mlx_ptr: mlx_t, z: int, width: int | None = None,
+                    height: int | None = None) -> mlx_image_t:
+        if not width:
+            width = mlx_ptr.contents.width
+
+        if not height:
+            height = mlx_ptr.contents.height
+
+        img: mlx_image_t = mlx.mlx_new_image(mlx_ptr,
+                                             width, height)
+
+        mlx.mlx_image_to_window(mlx_ptr, img, 0, 0)
+
+        img.contents.instances[0].z = z
+
+        return img
 
     @staticmethod
     def _fill_window_bg(img: mlx_image_t, color: int | Colors,
@@ -36,7 +54,7 @@ class MlxCanvas:
                     decimal_pxcolor = _pick_color(bg_point_effect)
                 else:
                     decimal_pxcolor = _pick_color(color)
-                MlxCanvas._fill_pixel(img, x, y, decimal_pxcolor)
+                MlxCanvas._put_pixel(img, x, y, decimal_pxcolor)
 
     @staticmethod
     def _load_png_to_mlximg(layer: mlx_image_t,
@@ -69,7 +87,7 @@ class MlxCanvas:
                     else:
                         color = replacement_color.value
 
-                MlxCanvas._fill_pixel(layer, x + png_x, y + png_y, color)
+                MlxCanvas._put_pixel(layer, x + png_x, y + png_y, color)
 
     @staticmethod
     def _draw_text(layer: mlx_image_t,
@@ -112,7 +130,7 @@ class MlxCanvas:
 
                         pixel_color = replacement_color
 
-                    MlxCanvas._fill_pixel(img, img_x + x + layer_x,
+                    MlxCanvas._put_pixel(img, img_x + x + layer_x,
                                        y + layer_y, pixel_color)
 
         if isinstance(color, Colors):
@@ -133,7 +151,7 @@ class MlxCanvas:
 
         for y in range(start[1], end[1] + 1):
             for x in range(start[0], end[0] + 1):
-                MlxCanvas._fill_pixel(text_layer, x, y, 0x00000000)
+                MlxCanvas._put_pixel(text_layer, x, y, 0x00000000)
 
 
     @staticmethod
@@ -142,7 +160,7 @@ class MlxCanvas:
         y = -r
 
         if not r:
-            MlxCanvas._fill_pixel(layer,cx, cy, pixel_color)
+            MlxCanvas._put_pixel(layer,cx, cy, pixel_color)
             return
 
         while (x < -y):
@@ -152,24 +170,24 @@ class MlxCanvas:
             if c > r*r:
                 y += 1
 
-            MlxCanvas._fill_pixel(layer, cx + x, cy + y, pixel_color)
-            MlxCanvas._fill_pixel(layer, cx + x, cy - y, pixel_color)
-            MlxCanvas._fill_pixel(layer, cx - x, cy + y, pixel_color)
-            MlxCanvas._fill_pixel(layer, cx - x, cy - y, pixel_color)
+            MlxCanvas._put_pixel(layer, cx + x, cy + y, pixel_color)
+            MlxCanvas._put_pixel(layer, cx + x, cy - y, pixel_color)
+            MlxCanvas._put_pixel(layer, cx - x, cy + y, pixel_color)
+            MlxCanvas._put_pixel(layer, cx - x, cy - y, pixel_color)
 
-            MlxCanvas._fill_pixel(layer, cx + y, cy + x, pixel_color)
-            MlxCanvas._fill_pixel(layer, cx - y, cy - x, pixel_color)
-            MlxCanvas._fill_pixel(layer, cx - y, cy + x, pixel_color)
-            MlxCanvas._fill_pixel(layer, cx + y, cy - x, pixel_color)
+            MlxCanvas._put_pixel(layer, cx + y, cy + x, pixel_color)
+            MlxCanvas._put_pixel(layer, cx - y, cy - x, pixel_color)
+            MlxCanvas._put_pixel(layer, cx - y, cy + x, pixel_color)
+            MlxCanvas._put_pixel(layer, cx + y, cy - x, pixel_color)
 
 
             for i in range(cx - x, cx + x + 1):
-                MlxCanvas._fill_pixel(layer, i, cy + y, pixel_color)
-                MlxCanvas._fill_pixel(layer, i, cy - y, pixel_color)
+                MlxCanvas._put_pixel(layer, i, cy + y, pixel_color)
+                MlxCanvas._put_pixel(layer, i, cy - y, pixel_color)
 
             for i in range(cx + y, cx - y):
-                MlxCanvas._fill_pixel(layer, i, cy + x, pixel_color)
-                MlxCanvas._fill_pixel(layer, i, cy - x, pixel_color)
+                MlxCanvas._put_pixel(layer, i, cy + x, pixel_color)
+                MlxCanvas._put_pixel(layer, i, cy - x, pixel_color)
 
             x += 1
 
