@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, ConfigDict
 from .Types import ZoneTypes, HubType, Colors
 from typing import Tuple
-from MLX import mlx_image_t
+from MLX.libmlx import mlx_image_t
 
 
 def pack_rgba(r: int, g: int, b: int, a: int) -> int:

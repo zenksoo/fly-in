@@ -1,11 +1,9 @@
 from pydantic import BaseModel
+import tomllib
 
 
-class WCfg(BaseModel):
+class WindowConfig(BaseModel):
     title: str = "Fly-in"
-
-    assets_path: str = "./Assets/images"
-    font_path: str = "./Assets/fonts"
 
     resizing: bool = True
     min_width: int = 500
@@ -15,10 +13,19 @@ class WCfg(BaseModel):
 
     font_color: int = 0xffffffff
 
-    enable_hub_name: bool = True
+    enable_hub_name: bool = False
     enable_connection_txt: bool = True
 
     x_gap: int = 42
     y_gap: int = 92
     padding_x: int = 64
     padding_y: int = 120
+
+    @staticmethod
+    def _from_file(file_path: str) -> "WindowConfig":
+        with open(file_path, 'rb') as f:
+            content = tomllib.load(f)
+
+        return WindowConfig(**content["window"], **content["map"])
+
+        pass

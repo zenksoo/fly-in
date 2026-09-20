@@ -1,7 +1,7 @@
 from MLX.libmlx import mlx, mlx_t, mlx_loop_hook_func, c_void_p
 from MLX.libmlx import MLX_KEY_E, MLX_KEY_RIGHT, MLX_KEY_LEFT, MLX_KEY_SPACE
 import argparse
-from Visualizer import MlxWindow
+from Visualizer import MlxVisualizer, WindowConfig
 from Parser import MapParser
 from CExceptions import MapParserError
 from sys import stderr
@@ -40,11 +40,15 @@ def main() -> None:
     print("\033[H\033[J")
     args = cli_argument_parser()
     try:
+        window_config = WindowConfig._from_file(CONFIG_PATH)
+        print(window_config.title)
+        print(window_config.x_gap)
         map_data: MapParser = MapParser.from_file(args.map)
 
-        window = MlxWindow(CONFIG_PATH)
+        window = MlxVisualizer(CONFIG_PATH)
 
         window.init_window(map_data)
+        window.init_map()
         solution = [["D1-waypoint1"]]
 
         window.engine(map_data, solution)

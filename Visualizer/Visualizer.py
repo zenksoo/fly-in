@@ -1,11 +1,11 @@
-from MLX import mlx, mlx_t, mlx_image_t
+from MLX.libmlx import mlx, mlx_t, mlx_image_t
 from PIL import Image
 from Utils import Drone, Hub, HubType, Connection, Colors
 from typing import List, Tuple, Any
 from Parser import MapParser
 import tomllib
 from typing import Dict
-from .wcfg import WCfg
+from .wcfg import WindowConfig
 from .Canvas import MlxCanvas
 import math
 from random import randint
@@ -20,11 +20,9 @@ DRONE_LAYER = 4
 BANNER_LAYER = 5
 
 
-class MlxWindow:
+class MlxVisualizer:
     def __init__(self, config_file: str) -> None:
-        with open(config_file, "rb") as f:
-            data = tomllib.load(f)
-        self.wcfg: WCfg = WCfg(**data["window"])
+        self.wcfg: WindowConfig = WindowConfig._from_file(config_file)
         self.mlx_ptr: mlx_t
 
     def _add_png_to_window(self, png: str | Image.Image,
@@ -50,18 +48,17 @@ class MlxWindow:
     def render_hubs(self, hubs: List[Hub]) -> None:
         self.hubs_layer = MlxCanvas._create_layer(self.mlx_ptr, HUBS_LAYER)
 
-
         for hub in hubs:
-            hub_png: str = f"{self.wcfg.assets_path}/hub_normal.png"
+            hub_png: str = "./Assets/images/hub_normal.png"
             if hub.metadata.zone == "priority":
-                hub_png = f"{self.wcfg.assets_path}/hub_priority.png"
+                hub_png = "./Assets/images/hub_priority.png"
             elif hub.metadata.zone == "restricted":
-                hub_png = f"{self.wcfg.assets_path}/hub_restricted.png"
+                hub_png = "./Assets/images/hub_restricted.png"
             elif hub.metadata.zone == "blocked":
-                hub_png = f"{self.wcfg.assets_path}/hub_blocked.png"
+                hub_png = "./Assets/images/hub_blocked.png"
 
             hub.x = self.wcfg.padding_x + hub.x * (80 + self.wcfg.x_gap)
-            hub.y = self.wcfg.padding_y + hub.y * (80 + self.wcfg.y_gap)
+            hub.y = self.wcfg.padding_y + self.wcfg.y_gap + hub.y * (80 + self.wcfg.y_gap)
 
             png = Image.open(hub_png).convert("RGBA")
 
@@ -84,7 +81,7 @@ class MlxWindow:
                 self.wcfg.font_color)
 
     @staticmethod
-    def _get_window_resolution(cfg: WCfg, hubs: List[Hub]) -> Tuple[int, int]:
+    def _get_window_resolution(cfg: WindowConfig, hubs: List[Hub]) -> Tuple[int, int]:
         min_x = min([h.x for h in hubs])
         min_y = min([h.y for h in hubs])
 
@@ -105,7 +102,7 @@ class MlxWindow:
         width = (max_x + 1) * (80 + cfg.x_gap) - cfg.x_gap
         width = (cfg.padding_x * 2) + width
 
-        height = (max_y + 1) * (80 + cfg.y_gap) - cfg.y_gap
+        height = (max_y + 2) * (80 + cfg.y_gap) - cfg.y_gap
         height = (cfg.padding_y * 2) + height
 
         if width < 500:
@@ -187,27 +184,32 @@ class MlxWindow:
             x += text_blk
 
     def _init_nturns_label(self) -> Dict[str, Tuple[int, int]]:
-        st_x = self.wcfg.padding_x - 40
-        end_x = self.wcfg.padding_x + 80
-        st_y = self.wcfg.padding_y - 72
-        end_y = self.wcfg.padding_y - 40
+        st_x = self.wcfg.padding_x
+        end_x = self.wcfg.padding_x + 100
+        st_y = self.wcfg.padding_y - 40
+        end_y = self.wcfg.padding_y
 
         MlxCanvas._draw_line(self.text_layer, st_x, st_y, end_x, st_y,
-                          2, 0xA2A2A2FF)
+                          1, 0xA2A2A2FF)
+
         MlxCanvas._draw_line(self.text_layer, st_x, st_y, st_x, end_y,
-                          2, 0xA2A2A2FF)
+                          1, 0xA2A2A2FF)
         MlxCanvas._draw_line(self.text_layer, end_x, st_y, end_x, end_y,
-                          2, 0xA2A2A2FF)
+                          1, 0xA2A2A2FF)
+
+        MlxCanvas._draw_line(self.text_layer, st_x, end_y, end_x, end_y,
+                          1, 0xA2A2A2FF)
 
         text = "TURN: 00"
 
-        return MlxCanvas._draw_text(self.text_layer, text, st_x + 32, st_y + 15,
+        return MlxCanvas._draw_text(self.text_layer, text, st_x + 25, st_y + 15,
                                  Colors.white)
 
     # def _calculate_drone_position_in_hub(
     #         self, hub: Hub, idx: int) -> Tuple[int, int]:
 
     #     return (0, 0)
+
 
     def init_window(self, map: MapParser) -> None:
         hubs = list(map.hubs.values())
@@ -225,20 +227,29 @@ class MlxWindow:
 
         banner_img = Image.open(BANNER_PATH).convert("RGBA")
         banner_x = (self.w - banner_img.size[0]) // 2
-        banner_y = 25
+        banner_y = (self.wcfg.padding_y - banner_img.size[1]) // 2
+
         self._add_png_to_window(banner_img, banner_x, banner_y, BANNER_LAYER)
+
+        # draw line under the padding_y at the top and above them in the bottom
+        st_x = self.wcfg.padding_x
+        st_y = self.wcfg.padding_y
+        end_x = self.w - self.wcfg.padding_x
+
+        MlxCanvas._draw_line(self.bg_layer,
+                             st_x, st_y,
+                             end_x, st_y, 0, 0xA2A2A2A6)
+
+        st_y = self.h - self.wcfg.padding_y
+
+        MlxCanvas._draw_line(self.bg_layer,
+                             st_x, st_y,
+                             end_x, st_y, 0, 0xA2A2A2A6)
+
+
 
         self.turns_label = self._init_nturns_label()
 
-# need fix to be simple it's looks good in the design that's why i add them :)
-        MlxCanvas._draw_line(self.bg_layer, self.wcfg.padding_x - 40,
-                          self.wcfg.padding_y - 40,
-                          self.w - self.wcfg.padding_x + 40,
-                          self.wcfg.padding_y - 40, 0, 0xA2A2A2A6)
-        MlxCanvas._draw_line(self.bg_layer, self.wcfg.padding_x - 40,
-                          self.h - self.wcfg.padding_y + 40,
-                          self.w - self.wcfg.padding_x + 40,
-                          self. h - self.wcfg.padding_y + 40, 0, 0xA2A2A2A6)
 
         self.render_hubs(hubs)
 
@@ -305,6 +316,9 @@ class MlxWindow:
                 yidx += 1
             elif i + 1 < nRows * nColumns:
                 xidx += 1
+
+    def init_map(self) -> None:
+        pass
 
     def engine(self, map: MapParser, solution: List[List[str]]) -> None:
         pass

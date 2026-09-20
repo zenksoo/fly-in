@@ -2,17 +2,21 @@
 title          = "Fly-In"
 resizing       = false
 min_width      = 600
+bg_color        = 0x060218FF
 
-assets_path     = "./Assets/images"
-font_path       = "./Assets/fonts"
-bg_color        = 0x000000ff
-bg_points_effect= 0x919191ff
+bg_points_effect= 0xCDCDCDFF
 font_color      = 0xffffffff
 
 enable_hub_name= true
 enable_connection_txt = true
 
+
+
+[map]
+# map configuration
 x_gap       = 35
 y_gap        = 92
 padding_x      = 64
-padding_y      = 140
+padding_y      = 150
+
+
