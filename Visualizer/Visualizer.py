@@ -209,11 +209,10 @@ class MlxWindow:
 
     #     return (0, 0)
 
-    def init(self, map: MapParser) -> None:
+    def init_window(self, map: MapParser) -> None:
         hubs = list(map.hubs.values())
 
         self.w, self.h = self._get_window_resolution(self.wcfg, hubs)
-        print(self.w, self.h)
 
         self.mlx_ptr = mlx.mlx_init(self.w, self.h,
                                     bytes(self.wcfg.title, "utf-8"),
@@ -235,11 +234,11 @@ class MlxWindow:
         MlxCanvas._draw_line(self.bg_layer, self.wcfg.padding_x - 40,
                           self.wcfg.padding_y - 40,
                           self.w - self.wcfg.padding_x + 40,
-                          self.wcfg.padding_y - 40, 1, 0xA2A2A2A6)
+                          self.wcfg.padding_y - 40, 0, 0xA2A2A2A6)
         MlxCanvas._draw_line(self.bg_layer, self.wcfg.padding_x - 40,
                           self.h - self.wcfg.padding_y + 40,
                           self.w - self.wcfg.padding_x + 40,
-                          self. h - self.wcfg.padding_y + 40, 1, 0xA2A2A2A6)
+                          self. h - self.wcfg.padding_y + 40, 0, 0xA2A2A2A6)
 
         self.render_hubs(hubs)
 

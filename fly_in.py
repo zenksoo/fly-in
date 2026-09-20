@@ -44,10 +44,12 @@ def main() -> None:
 
         window = MlxWindow(CONFIG_PATH)
 
-        window.init(map_data)
+        window.init_window(map_data)
         solution = [["D1-waypoint1"]]
 
         window.engine(map_data, solution)
+
+
         mlx.mlx_loop_hook(window.mlx_ptr, handel_input,
                           ctypes.cast(window.mlx_ptr, c_void_p))
         mlx.mlx_loop(window.mlx_ptr)
