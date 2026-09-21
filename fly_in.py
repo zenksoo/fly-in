@@ -48,11 +48,14 @@ def main() -> None:
         window = MlxVisualizer(CONFIG_PATH)
 
         window.init_window(map_data)
-        window.init_map()
+        window.init_map(map_data)
         solution = [["D1-waypoint1"]]
 
         window.engine(map_data, solution)
 
+
+        list(map_data.hubs.values())[4].mlx_img.contents.instances[0].enabled = False
+        print(list(map_data.hubs.values())[4].mlx_img.contents.width)
 
         mlx.mlx_loop_hook(window.mlx_ptr, handel_input,
                           ctypes.cast(window.mlx_ptr, c_void_p))

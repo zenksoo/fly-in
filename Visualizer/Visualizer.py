@@ -45,10 +45,8 @@ class MlxVisualizer:
 
         return mlx_img
 
-    def render_hubs(self, hubs: List[Hub]) -> None:
-        self.hubs_layer = MlxCanvas._create_layer(self.mlx_ptr, HUBS_LAYER)
-
-        for hub in hubs:
+    def render_hubs(self, hubs: Dict[str, Hub]) -> None:
+        for hub in hubs.values():
             hub_png: str = "./Assets/images/hub_normal.png"
             if hub.metadata.zone == "priority":
                 hub_png = "./Assets/images/hub_priority.png"
@@ -62,8 +60,15 @@ class MlxVisualizer:
 
             png = Image.open(hub_png).convert("RGBA")
 
-            MlxCanvas._load_png_to_mlximg(self.hubs_layer,
-                                       png, hub.x, hub.y,
+            png_w, png_h = png.size
+
+            hub.mlx_img = MlxCanvas._create_layer(self.mlx_ptr,
+                                                  HUBS_LAYER, png_w, png_h)
+
+            hub.mlx_img.contents.instances[0].enabled = False
+            mlx.mlx_image_to_window(self.mlx_ptr, hub.mlx_img, hub.x, hub.y)
+            MlxCanvas._load_png_to_mlximg(hub.mlx_img,
+                                       png, 0, 0,
                                        hub.metadata.color, Colors.hub_source)
 
             hub.gfx.w, hub.gfx.h = png.size
@@ -113,9 +118,7 @@ class MlxVisualizer:
     def render_connections(self,
                            connections: List[Connection],
                            hubs: Dict[str, Hub]) -> None:
-        self.connections_layer = MlxCanvas._create_layer(self.mlx_ptr, CONNECTIONS_LAYER)
-
-        color = 0xFFFFFF62
+        color = 0xFFFFFF49
         for con in connections:
             hub_w = hubs[con.start].gfx.w
             hub_h = hubs[con.start].gfx.h
@@ -221,6 +224,7 @@ class MlxVisualizer:
                                     self.wcfg.resizing)
         self.bg_layer = MlxCanvas._create_layer(self.mlx_ptr, BACKGROUND_LAYER)
         self.text_layer = MlxCanvas._create_layer(self.mlx_ptr, TEXT_LAYER)
+        self.connections_layer = MlxCanvas._create_layer(self.mlx_ptr, CONNECTIONS_LAYER)
 
         MlxCanvas._fill_window_bg(self.bg_layer, self.wcfg.bg_color,
                                self.wcfg.bg_points_effect)
@@ -250,8 +254,63 @@ class MlxVisualizer:
 
         self.turns_label = self._init_nturns_label()
 
+        # # setup drones
+        # self.drones: Dict[str, Drone] = {}
+        # start_hub = [
+        #     hub for hub in map.hubs.values() if hub.type == HubType.start_hub
+        #     ][0]
+        # drone_colors = [
+        #     Colors.red, Colors.purple, Colors.yellow, Colors.blue,
+        #     Colors.green, Colors.pink, Colors.brown
+        # ]
+        # drone_png = Image.open("./Assets/images/Drone.png").convert("RGBA")
+        # DImgWidth, DimgHeight = drone_png.size
 
-        self.render_hubs(hubs)
+        # print(hubs[0].gfx.w)
+
+        # # calculate the position of each drone on hub
+        # # we have hub width and height so the total column is width / DImgWidth
+        # # and total rows is height / DImgHeight
+        # # and i will put extra drone that his position is out the hub on each
+        # # other in last position
+        # nColumns = int(hubs[0].gfx.w / DImgWidth)
+        # nRows = int(hubs[0].gfx.h / DimgHeight)
+
+        # fullRows = math.ceil(map.ndrones / nColumns)
+        # if fullRows > nRows:
+        #     fullRows = nRows
+        # fullColumns = nColumns if map.ndrones > nColumns else map.ndrones
+
+        # st_y = int((hubs[0].gfx.h - (DimgHeight * fullRows)) / 2)
+        # st_x = int((hubs[0].gfx.w - (DImgWidth * fullColumns)) / 2)
+
+        # xidx = 0
+        # yidx = 0
+
+        # for i in range(map.ndrones):
+        #     drone = Drone(f"D{i + 1}")
+        #     if i >= len(drone_colors):
+        #         drone_color = drone_colors[randint(0, len(drone_colors) - 1)]
+        #     else:
+        #         drone_color = drone_colors[i]
+
+        #     drone.cord = (start_hub.x + st_x + DImgWidth * xidx,
+        #                   start_hub.y + st_y + DimgHeight * yidx)
+        #     drone.mlximg = self._add_png_to_window(
+        #         drone_png, drone.cord[0],
+        #         drone.cord[1], DRONE_LAYER + i, Colors.blue, drone_color)
+
+        #     self.drones[drone.id] = drone
+
+        #     if xidx == nColumns - 1 and i + 1 < nRows * nColumns:
+        #         xidx = 0
+        #         yidx += 1
+        #     elif i + 1 < nRows * nColumns:
+        #         xidx += 1
+
+    def init_map(self, map: MapParser) -> None:
+
+        self.render_hubs(map.hubs)
 
         self.render_connections(map.connections, map.hubs)
 
@@ -263,61 +322,7 @@ class MlxVisualizer:
             "<|: SLOWER"
         ])
 
-        # setup drones
-        self.drones: Dict[str, Drone] = {}
-        start_hub = [
-            hub for hub in map.hubs.values() if hub.type == HubType.start_hub
-            ][0]
-        drone_colors = [
-            Colors.red, Colors.purple, Colors.yellow, Colors.blue,
-            Colors.green, Colors.pink, Colors.brown
-        ]
-        drone_png = Image.open("./Assets/images/Drone.png").convert("RGBA")
-        DImgWidth, DimgHeight = drone_png.size
 
-        print(hubs[0].gfx.w)
-
-        # calculate the position of each drone on hub
-        # we have hub width and height so the total column is width / DImgWidth
-        # and total rows is height / DImgHeight
-        # and i will put extra drone that his position is out the hub on each
-        # other in last position
-        nColumns = int(hubs[0].gfx.w / DImgWidth)
-        nRows = int(hubs[0].gfx.h / DimgHeight)
-
-        fullRows = math.ceil(map.ndrones / nColumns)
-        if fullRows > nRows:
-            fullRows = nRows
-        fullColumns = nColumns if map.ndrones > nColumns else map.ndrones
-
-        st_y = int((hubs[0].gfx.h - (DimgHeight * fullRows)) / 2)
-        st_x = int((hubs[0].gfx.w - (DImgWidth * fullColumns)) / 2)
-
-        xidx = 0
-        yidx = 0
-
-        for i in range(map.ndrones):
-            drone = Drone(f"D{i + 1}")
-            if i >= len(drone_colors):
-                drone_color = drone_colors[randint(0, len(drone_colors) - 1)]
-            else:
-                drone_color = drone_colors[i]
-
-            drone.cord = (start_hub.x + st_x + DImgWidth * xidx,
-                          start_hub.y + st_y + DimgHeight * yidx)
-            drone.mlximg = self._add_png_to_window(
-                drone_png, drone.cord[0],
-                drone.cord[1], DRONE_LAYER + i, Colors.blue, drone_color)
-
-            self.drones[drone.id] = drone
-
-            if xidx == nColumns - 1 and i + 1 < nRows * nColumns:
-                xidx = 0
-                yidx += 1
-            elif i + 1 < nRows * nColumns:
-                xidx += 1
-
-    def init_map(self) -> None:
         pass
 
     def engine(self, map: MapParser, solution: List[List[str]]) -> None:

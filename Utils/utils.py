@@ -66,6 +66,7 @@ class Hub(BaseModel):
     type: HubType
     x: int
     y: int
+    mlx_img: mlx_image_t | None = None
     metadata: HubMetaData = HubMetaData()
     gfx: HUBGfx = HUBGfx()
 
