@@ -7,8 +7,7 @@ import tomllib
 from typing import Dict
 from .wcfg import WindowConfig
 from .Canvas import MlxCanvas
-import math
-from random import randint
+import random
 
 BANNER_PATH = "./Assets/images/banner.png"
 
@@ -45,45 +44,6 @@ class MlxVisualizer:
 
         return mlx_img
 
-    def render_hubs(self, hubs: Dict[str, Hub]) -> None:
-        for hub in hubs.values():
-            hub_png: str = "./Assets/images/hub_normal.png"
-            if hub.metadata.zone == "priority":
-                hub_png = "./Assets/images/hub_priority.png"
-            elif hub.metadata.zone == "restricted":
-                hub_png = "./Assets/images/hub_restricted.png"
-            elif hub.metadata.zone == "blocked":
-                hub_png = "./Assets/images/hub_blocked.png"
-
-            hub.x = self.wcfg.padding_x + hub.x * (80 + self.wcfg.x_gap)
-            hub.y = self.wcfg.padding_y + self.wcfg.y_gap + hub.y * (80 + self.wcfg.y_gap)
-
-            png = Image.open(hub_png).convert("RGBA")
-
-            png_w, png_h = png.size
-
-            hub.mlx_img = MlxCanvas._create_layer(self.mlx_ptr,
-                                                  HUBS_LAYER, png_w, png_h)
-
-            hub.mlx_img.contents.instances[0].enabled = False
-            mlx.mlx_image_to_window(self.mlx_ptr, hub.mlx_img, hub.x, hub.y)
-            MlxCanvas._load_png_to_mlximg(hub.mlx_img,
-                                       png, 0, 0,
-                                       hub.metadata.color, Colors.hub_source)
-
-            hub.gfx.w, hub.gfx.h = png.size
-
-            if self.wcfg.enable_hub_name:
-                hub.gfx.top_label = MlxCanvas._draw_text(
-                    self.text_layer, hub.name, hub.x, hub.y - 12,
-                    self.wcfg.font_color)
-
-            hub.gfx.bottom_label = MlxCanvas._draw_text(
-                self.text_layer,
-                f"00/{hub.metadata.max_drones}",
-                hub.x,
-                hub.y + hub.gfx.h + 4,
-                self.wcfg.font_color)
 
     @staticmethod
     def _get_window_resolution(cfg: WindowConfig, hubs: List[Hub]) -> Tuple[int, int]:
@@ -115,10 +75,49 @@ class MlxVisualizer:
 
         return (width, height)
 
+    def render_hubs(self, hubs: Dict[str, Hub]) -> None:
+        for hub in hubs.values():
+            hub_png: str = "./Assets/images/hub_normal.png"
+            if hub.metadata.zone == "priority":
+                hub_png = "./Assets/images/hub_priority.png"
+            elif hub.metadata.zone == "restricted":
+                hub_png = "./Assets/images/hub_restricted.png"
+            elif hub.metadata.zone == "blocked":
+                hub_png = "./Assets/images/hub_blocked.png"
+
+            hub.x = self.wcfg.padding_x + hub.x * (80 + self.wcfg.x_gap)
+            hub.y = self.wcfg.padding_y + self.wcfg.y_gap + hub.y * (80 + self.wcfg.y_gap)
+
+            png = Image.open(hub_png).convert("RGBA")
+
+            hub.gfx.w, hub.gfx.h = png.size
+
+            hub.mlx_img = mlx.mlx_new_image(self.mlx_ptr, hub.gfx.w, hub.gfx.h)
+
+            mlx.mlx_image_to_window(self.mlx_ptr, hub.mlx_img, hub.x, hub.y)
+            hub.mlx_img.contents.instances[0].z = HUBS_LAYER
+
+            MlxCanvas._load_png_to_mlximg(hub.mlx_img,
+                                       png, 0, 0,
+                                       hub.metadata.color, Colors.hub_source)
+
+
+            if self.wcfg.enable_hub_name:
+                hub.gfx.top_label = MlxCanvas._draw_text(
+                    self.text_layer, hub.name, hub.x, hub.y - 12,
+                    self.wcfg.font_color)
+
+            hub.gfx.bottom_label = MlxCanvas._draw_text(
+                self.text_layer,
+                f"00/{hub.metadata.max_drones}",
+                hub.x,
+                hub.y + hub.gfx.h + 4,
+                self.wcfg.font_color)
+
     def render_connections(self,
                            connections: List[Connection],
                            hubs: Dict[str, Hub]) -> None:
-        color = 0xFFFFFF49
+        color = 0xC0C0C0AE
         for con in connections:
             hub_w = hubs[con.start].gfx.w
             hub_h = hubs[con.start].gfx.h
@@ -145,9 +144,54 @@ class MlxVisualizer:
                     f"0{con.metadata.max_link_capacity}",
                     text_x, text_y, self.wcfg.font_color)
 
+    def setup_drones(self, hubs: Dict[str, Hub], n_drones: int) -> None:
+        self.drones: Dict[str, Drone] = {}
+
+
+
+        start_hub = [
+            hub for hub in hubs.values() if hub.type == HubType.start_hub
+            ][0]
+
+        drone_png = Image.open("./Assets/images/Drone.png").convert("RGBA")
+        png_w, png_h = drone_png.size
+
+        hub_area = list(hubs.values())[0].mlx_img.contents.width
+        randomize_position = 0
+
+        # init_drone_coordinate = [hubs.values()[0]]
+
+        x = start_hub.x + (hub_area - png_w) // 2
+        y = start_hub.y + (hub_area - png_h) // 2
+
+        drone_colors = [Colors.blue, Colors.red, Colors.yellow,
+                        Colors.pink, Colors.black, Colors.cyan,
+                        Colors.green, Colors.gray, Colors.azure, Colors.lime]
+
+        for i in range(1, n_drones + 1):
+
+            drone: Drone = Drone(f"D{i}")
+            coord_x = x + random.randint(-randomize_position, randomize_position)
+            coord_y = y + random.randint(-randomize_position, randomize_position)
+            coord_z = DRONE_LAYER + i - 1
+            drone.mlximg = mlx.mlx_new_image(self.mlx_ptr, png_w, png_h)
+
+            mlx.mlx_image_to_window(self.mlx_ptr, drone.mlximg, coord_x, coord_y)
+
+            MlxCanvas._load_png_to_mlximg(drone.mlximg, drone_png, 0, 0,
+                                          random.choice(drone_colors), Colors.blue)
+
+            drone.mlximg.contents.instances[0].z = coord_z
+            drone.cord = (x, y)
+            print(drone.mlximg.contents.instances[0].z)
+            print(drone.mlximg.contents.instances[0].x, drone.mlximg.contents.instances[0].y)
+            print(drone.cord)
+
     def _window_footer(self, texts: List[str]) -> None:
         x = self.wcfg.padding_x
         y = self.mlx_ptr.contents.height - int(self.wcfg.padding_y / 2)
+
+        lines_gap = 32
 
         total_blk = len(texts)
         break_footer: bool = False
@@ -169,18 +213,18 @@ class MlxVisualizer:
         row_items = total_blk
 
         if break_footer:
+            # >> 8 is the height of character (px unit)
+            y = y - (8 * 2 + lines_gap) // 2
             row_items = (int(total_blk / 2)
                          if not total_blk % 2 else
                          int(total_blk / 2) + 1)
-        else:
-            y += 20
 
         spacing = calculate_spacing(row_items)
 
         for txt, i in zip(texts, range(total_blk)):
             if (break_footer and i == row_items):
                 spacing = calculate_spacing(int(total_blk / 2))
-                y += 32
+                y += lines_gap
                 x = self.wcfg.padding_x
             x += spacing
             MlxCanvas._draw_text(self.text_layer, txt, x, y)
@@ -207,12 +251,6 @@ class MlxVisualizer:
 
         return MlxCanvas._draw_text(self.text_layer, text, st_x + 25, st_y + 15,
                                  Colors.white)
-
-    # def _calculate_drone_position_in_hub(
-    #         self, hub: Hub, idx: int) -> Tuple[int, int]:
-
-    #     return (0, 0)
-
 
     def init_window(self, map: MapParser) -> None:
         hubs = list(map.hubs.values())
@@ -254,65 +292,13 @@ class MlxVisualizer:
 
         self.turns_label = self._init_nturns_label()
 
-        # # setup drones
-        # self.drones: Dict[str, Drone] = {}
-        # start_hub = [
-        #     hub for hub in map.hubs.values() if hub.type == HubType.start_hub
-        #     ][0]
-        # drone_colors = [
-        #     Colors.red, Colors.purple, Colors.yellow, Colors.blue,
-        #     Colors.green, Colors.pink, Colors.brown
-        # ]
-        # drone_png = Image.open("./Assets/images/Drone.png").convert("RGBA")
-        # DImgWidth, DimgHeight = drone_png.size
-
-        # print(hubs[0].gfx.w)
-
-        # # calculate the position of each drone on hub
-        # # we have hub width and height so the total column is width / DImgWidth
-        # # and total rows is height / DImgHeight
-        # # and i will put extra drone that his position is out the hub on each
-        # # other in last position
-        # nColumns = int(hubs[0].gfx.w / DImgWidth)
-        # nRows = int(hubs[0].gfx.h / DimgHeight)
-
-        # fullRows = math.ceil(map.ndrones / nColumns)
-        # if fullRows > nRows:
-        #     fullRows = nRows
-        # fullColumns = nColumns if map.ndrones > nColumns else map.ndrones
-
-        # st_y = int((hubs[0].gfx.h - (DimgHeight * fullRows)) / 2)
-        # st_x = int((hubs[0].gfx.w - (DImgWidth * fullColumns)) / 2)
-
-        # xidx = 0
-        # yidx = 0
-
-        # for i in range(map.ndrones):
-        #     drone = Drone(f"D{i + 1}")
-        #     if i >= len(drone_colors):
-        #         drone_color = drone_colors[randint(0, len(drone_colors) - 1)]
-        #     else:
-        #         drone_color = drone_colors[i]
-
-        #     drone.cord = (start_hub.x + st_x + DImgWidth * xidx,
-        #                   start_hub.y + st_y + DimgHeight * yidx)
-        #     drone.mlximg = self._add_png_to_window(
-        #         drone_png, drone.cord[0],
-        #         drone.cord[1], DRONE_LAYER + i, Colors.blue, drone_color)
-
-        #     self.drones[drone.id] = drone
-
-        #     if xidx == nColumns - 1 and i + 1 < nRows * nColumns:
-        #         xidx = 0
-        #         yidx += 1
-        #     elif i + 1 < nRows * nColumns:
-        #         xidx += 1
 
     def init_map(self, map: MapParser) -> None:
 
         self.render_hubs(map.hubs)
 
         self.render_connections(map.connections, map.hubs)
+
 
         self._window_footer([
             f"WIDTH: {self.mlx_ptr.contents.width}",
@@ -322,8 +308,9 @@ class MlxVisualizer:
             "<|: SLOWER"
         ])
 
+        self.setup_drones(map.hubs, map.ndrones)
 
-        pass
+
 
     def engine(self, map: MapParser, solution: List[List[str]]) -> None:
         pass

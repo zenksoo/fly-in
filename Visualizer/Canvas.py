@@ -130,7 +130,7 @@ class MlxCanvas:
 
                         pixel_color = replacement_color
 
-                    MlxCanvas._put_pixel(img, img_x + x + layer_x,
+                    MlxCanvas._put_pixel(img, img_x +  x + layer_x,
                                        y + layer_y, pixel_color)
 
         if isinstance(color, Colors):

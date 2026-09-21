@@ -53,10 +53,6 @@ def main() -> None:
 
         window.engine(map_data, solution)
 
-
-        list(map_data.hubs.values())[4].mlx_img.contents.instances[0].enabled = False
-        print(list(map_data.hubs.values())[4].mlx_img.contents.width)
-
         mlx.mlx_loop_hook(window.mlx_ptr, handel_input,
                           ctypes.cast(window.mlx_ptr, c_void_p))
         mlx.mlx_loop(window.mlx_ptr)
