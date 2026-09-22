@@ -19,12 +19,12 @@ from platform import system
 
 try: # Load FFI Library
     lib = 'libmlx42'
-    sys = system()
-    if sys == "Linux":
+    system = system()
+    if system == "Linux":
         lib_name = f"{lib}.so"
-    elif sys == "Darwin":
+    elif system == "Darwin":
         lib_name = f"{lib}.dylib"
-    elif sys == "Windows":
+    elif system == "Windows":
         lib_name = f"{lib}.dll"
     else:
         raise RuntimeError("Unsupported operating system")
@@ -139,7 +139,6 @@ MLX_KEY_F18             = 307
 MLX_KEY_F19             = 308
 MLX_KEY_F20             = 309
 MLX_KEY_F21             = 310
-
 MLX_KEY_F22             = 311
 MLX_KEY_F23             = 312
 MLX_KEY_F24             = 313
@@ -219,6 +218,14 @@ class mlx_texture_t(ctypes.Structure):
         ("pixels", ctypes.POINTER(c_uint8))
     ]
 
+class mlx_instance_t(ctypes.Structure):
+    _fields_ = [
+        ("x", c_int32),
+        ("y", c_int32),
+        ("z", c_int32),
+        ("enabled", c_bool)
+    ]
+
 class xpm_t(ctypes.Structure):
     _fields_ = [
         ("texture", mlx_texture_t),
@@ -235,14 +242,6 @@ class mlx_key_data_t(ctypes.Structure):
         ("modifier", c_int32) # ENUM
     ]
 
-class mlx_instance_t(ctypes.Structure):
-    _fields_ = [
-        ("x", c_int32),
-        ("y", c_int32),
-        ("z", c_int32),
-        ("enabled", c_bool)
-    ]
-
 class mlx_image_t(ctypes.Structure):
     _fields_ = [
         ("width", c_uint32),
@@ -254,7 +253,13 @@ class mlx_image_t(ctypes.Structure):
         ("context", c_void_p)
     ]
 
-
+class mlx_instance_t(ctypes.Structure):
+    _fields_ = [
+        ("x", c_int32),
+        ("y", c_int32),
+        ("z", c_int32),
+        ("enabled", c_bool)
+    ]
 
 class mlx_t(ctypes.Structure):
     _fields_ = [
@@ -288,7 +293,6 @@ mlx.mlx_get_errno.restype = c_int32 # errno_t enum
 
 
 # Generic MLX Functions
-
 mlx.mlx_init.argtypes = [c_int32, c_int32, c_char_p, c_bool]
 mlx.mlx_init.restype = ctypes.POINTER(mlx_t)
 

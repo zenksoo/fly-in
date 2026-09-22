@@ -1,4 +1,4 @@
-from MLX.libmlx import mlx, mlx_t, mlx_image_t
+from MLX.libmlx import mlx, mlx_t, mlx_image_t, mlx_loop_hook_func
 from PIL import Image
 from Utils import Drone, Hub, HubType, Connection, Colors
 from typing import List, Tuple, Any
@@ -8,6 +8,9 @@ from typing import Dict
 from .wcfg import WindowConfig
 from .Canvas import MlxCanvas
 import random
+import ctypes
+import time
+from datetime import datetime
 
 BANNER_PATH = "./Assets/images/banner.png"
 
@@ -20,9 +23,13 @@ BANNER_LAYER = 5
 
 
 class MlxVisualizer:
-    def __init__(self, config_file: str) -> None:
-        self.wcfg: WindowConfig = WindowConfig._from_file(config_file)
+    def __init__(self, config_file: str, map_data: MapParser) -> None:
         self.mlx_ptr: mlx_t
+
+        self.wcfg: WindowConfig = WindowConfig._from_file(config_file)
+        self.solution : List[List[str]] = []
+        self.map_data = map_data
+        self.run_animation = False
 
     def _add_png_to_window(self, png: str | Image.Image,
                            x: int, y: int, z: int,
@@ -182,10 +189,29 @@ class MlxVisualizer:
                                           random.choice(drone_colors), Colors.blue)
 
             drone.mlximg.contents.instances[0].z = coord_z
-            drone.cord = (x, y)
-            print(drone.mlximg.contents.instances[0].z)
-            print(drone.mlximg.contents.instances[0].x, drone.mlximg.contents.instances[0].y)
-            print(drone.cord)
+            drone.position = (x, y)
+            self.drones[drone.id] = drone
+
+    def _reset_drones_position(self) -> None:
+        start_hub = [
+            hub for hub in self.map_data.hubs.values() if hub.type == HubType.start_hub
+            ][0]
+
+        png_w = list(self.drones.values())[0].mlximg.contents.width
+        png_h = list(self.drones.values())[0].mlximg.contents.height
+
+        hub_w = list(self.map_data.hubs.values())[0].mlx_img.contents.width
+        hub_h = list(self.map_data.hubs.values())[0].mlx_img.contents.height
+
+        x = start_hub.x + (hub_w - png_w) // 2
+        y = start_hub.y + (hub_h - png_h) // 2
+
+        for drone in self.drones.values():
+            drone.position = (x, y)
+            drone.mlximg.contents.instances[0].x = x
+            drone.mlximg.contents.instances[0].y = y
+
+
 
     def _window_footer(self, texts: List[str]) -> None:
         x = self.wcfg.padding_x
@@ -252,8 +278,8 @@ class MlxVisualizer:
         return MlxCanvas._draw_text(self.text_layer, text, st_x + 25, st_y + 15,
                                  Colors.white)
 
-    def init_window(self, map: MapParser) -> None:
-        hubs = list(map.hubs.values())
+    def init_window(self) -> None:
+        hubs = list(self.map_data.hubs.values())
 
         self.w, self.h = self._get_window_resolution(self.wcfg, hubs)
 
@@ -293,11 +319,12 @@ class MlxVisualizer:
         self.turns_label = self._init_nturns_label()
 
 
-    def init_map(self, map: MapParser) -> None:
+    def init_map(self) -> None:
 
-        self.render_hubs(map.hubs)
+        self.render_hubs(self.map_data.hubs)
 
-        self.render_connections(map.connections, map.hubs)
+        self.render_connections(self.map_data.connections,
+                                self.map_data.hubs)
 
 
         self._window_footer([
@@ -308,9 +335,103 @@ class MlxVisualizer:
             "<|: SLOWER"
         ])
 
-        self.setup_drones(map.hubs, map.ndrones)
+        self.setup_drones(self.map_data.hubs, self.map_data.ndrones)
+
+    def _get_moved_drones(self, turn: int) -> List[Drone]:
+        moved_drones: List[Drone] = []
+
+        turn_solution = self.solution[turn]
+
+        for st in turn_solution:
+            drone_id, hub_name = st.split("-")
+            drone = self.drones[drone_id]
+            hub = self.map_data.hubs[hub_name]
+
+            hub_w, hub_h = (hub.mlx_img.contents.width,
+                            hub.mlx_img.contents.height)
+
+
+            distination_x = hub.x + (hub_w - drone.mlximg.contents.width) // 2
+            distination_y = hub.y + (hub_h - drone.mlximg.contents.height) // 2
+
+            drone.distination = (distination_x, distination_y)
+
+            moved_drones.append(drone)
+
+        return moved_drones
 
 
 
-    def engine(self, map: MapParser, solution: List[List[str]]) -> None:
-        pass
+
+
+    # def run(self, turn: List[str]) -> bool:
+    #     for frame in turn:
+    #         drone_name, hub_name = frame.split("-")
+    #         drone = self.drones[drone_name]
+    #         hub = self.map_data.hubs[hub_name]
+    #         sx = hub.x - drone.position[0]
+    #         sy = hub.y - drone.position[1]
+
+    #         step = max(abs(sx), abs(sy))
+
+    #         dx = sx / step
+    #         dy = sy / step
+    #         old_time = time.time()
+    #         x = drone.mlximg.contents.instances[0].x
+    #         y = drone.mlximg.contents.instances[0].y
+
+
+    #         for i in range(step):
+    #             current_time = time.time()
+    #             dt = 0.001
+
+    #             drone.mlximg.contents.instances[0].x = round(x)
+    #             drone.mlximg.contents.instances[0].y = round(y)
+
+    #             x += dx * dt
+    #             y += dy * dt
+
+    #     return True
+
+    # @mlx_loop_hook_func
+    # @staticmethod
+    # def engine(param) -> None:
+    #     speed = 10
+    #     window: MlxVisualizer = ctypes.cast(param, ctypes.py_object).value
+    #     for sol in window.solution:
+    #         for fram in sol:
+    #             drone_name, hub_name = fram.split("-")
+    #             drone = window.drones[drone_name]
+    #             hub = window.map_data.hubs[hub_name]
+
+    #             sx = hub.x - drone.position[0]
+    #             sy = hub.y - drone.position[1]
+
+    #             print(sx, sy)
+
+    #             step = max(abs(sx), abs(sy))
+
+    #             dx = sx / step
+    #             dy = sy / step
+    #             old_time = datetime.now()
+    #             x = drone.position[0]
+    #             y = drone.position[1]
+
+
+    #             for i in range(step):
+    #                 current_time = datetime.now()
+    #                 dt = current_time - old_time
+    #                 dt = 0.1
+
+
+    #                 print(i * dt)
+    #                 drone.mlximg.contents.instances[0].x = round(x)
+    #                 drone.mlximg.contents.instances[0].y = round(y)
+
+    #                 x += dx * dt
+    #                 y += dy * dt
+
+
+
+
+

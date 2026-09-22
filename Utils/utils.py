@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from .Types import ZoneTypes, HubType, Colors
 from typing import Tuple
 from MLX.libmlx import mlx_image_t
-
+from random import randint
 
 def pack_rgba(r: int, g: int, b: int, a: int) -> int:
     return (r << 24) | (g << 16) | (b << 8) | a
@@ -33,12 +33,59 @@ def HexColor_to_decimal(hex_color: str) -> int:
         raise ValueError(
             "Invalid HexDecimal Value, (e.g #fff #ffffff #ffff #ffffffff)")
 
-
-class Drone:
+class KinematicEntity2D:
     def __init__(self, id: str) -> None:
         self.id = id
-        self.cord: Tuple[int, int]
+        self.position: Tuple[float, float]
+        self.distination: Tuple[int, int]
         self.mlximg: mlx_image_t
+
+    def _get_vector_direction_to(self) -> Tuple[float, float]:
+
+        sx = self.distination[0] - self.position[0]
+        sy = self.distination[1] - self.position[1]
+
+        step = max(abs(sx), abs(sy))
+
+        dx = sx / step
+        dy = sy / step
+
+        return (dx, dy)
+
+    def _move_toward(self, SPEED: float = 1.0) -> None:
+
+        if self._has_arrived():
+            return
+
+        direction = self._get_vector_direction_to()
+        self.position = (self.position[0] + (direction[0] * SPEED),
+                          self.position[1] + (direction[1] * SPEED))
+
+        self.mlximg.contents.instances[0].x = round(self.position[0])
+        self.mlximg.contents.instances[0].y = round(self.position[1])
+
+    def _has_arrived(self) -> bool:
+        hub_w = self.mlximg.contents.width
+        hub_h = self.mlximg.contents.height
+
+        padding_x = (hub_w - 40) // 2
+        padding_y = (hub_h - 40) // 2
+
+        x, y = (self.position[0], self.position[1])
+
+        print(x, y)
+        print(self.distination[0], self.distination[1])
+
+        if ((x >= self.distination[0] - 5 and x <= self.distination[0] + 5) and
+            (y >= self.distination[1] - 5 and y <= self.distination[1] + 5)):
+            return True
+        return False
+
+
+class Drone(KinematicEntity2D):
+    def __init__(self, id: str) -> None:
+        super().__init__(id)
+
 
 
 class HubMetaData(BaseModel):
