@@ -58,8 +58,8 @@ class KinematicEntity2D:
             return
 
         direction = self._get_vector_direction_to()
-        self.position = (self.position[0] + (direction[0] * SPEED * random.random()),
-                          self.position[1] + (direction[1] * SPEED * random.random()))
+        self.position = (self.position[0] + (direction[0] * SPEED * (random.random() + 0.5)),
+                          self.position[1] + (direction[1] * SPEED * (random.random() + 0.5)))
 
         self.mlximg.contents.instances[0].x = round(self.position[0])
         self.mlximg.contents.instances[0].y = round(self.position[1])
