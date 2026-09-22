@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from .Types import ZoneTypes, HubType, Colors
 from typing import Tuple
 from MLX.libmlx import mlx_image_t
-from random import randint
+import random
 
 def pack_rgba(r: int, g: int, b: int, a: int) -> int:
     return (r << 24) | (g << 16) | (b << 8) | a
@@ -58,8 +58,8 @@ class KinematicEntity2D:
             return
 
         direction = self._get_vector_direction_to()
-        self.position = (self.position[0] + (direction[0] * SPEED),
-                          self.position[1] + (direction[1] * SPEED))
+        self.position = (self.position[0] + (direction[0] * SPEED * random.random()),
+                          self.position[1] + (direction[1] * SPEED * random.random()))
 
         self.mlximg.contents.instances[0].x = round(self.position[0])
         self.mlximg.contents.instances[0].y = round(self.position[1])
@@ -73,8 +73,8 @@ class KinematicEntity2D:
 
         x, y = (self.position[0], self.position[1])
 
-        print(x, y)
-        print(self.distination[0], self.distination[1])
+        # print(x, y)
+        # print(self.distination[0], self.distination[1])
 
         if ((x >= self.distination[0] - 5 and x <= self.distination[0] + 5) and
             (y >= self.distination[1] - 5 and y <= self.distination[1] + 5)):

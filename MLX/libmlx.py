@@ -329,6 +329,9 @@ mlx.mlx_delete_image.restype = None
 mlx.mlx_is_key_down.argtypes = [ctypes.POINTER(mlx_t), ctypes.c_int] # keys_t
 mlx.mlx_is_key_down.restype = c_bool
 
+mlx.mlx_key_hook.argtypes = [ctypes.POINTER(mlx_t), mlx_keyfunc, c_void_p]
+mlx.mlx_key_hook.restype = None
+
 # Hooks
 mlx.mlx_loop_hook.argtypes = [ctypes.POINTER(mlx_t), mlx_loop_hook_func, c_void_p]
 mlx.mlx_loop_hook.restype = c_bool
