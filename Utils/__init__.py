@@ -1,6 +1,6 @@
 from .utils import pack_rgba, HexColor_to_decimal
 from .utils import Drone, Hub, HubMetaData, Connection, ConnectionMetadata
-from .Types import ZoneTypes, HubType, Colors
+from .Types import ZoneTypes, HubType, Colors, TextBox
 
 
 __version__ = "1.0.0"
@@ -17,5 +17,6 @@ __all__ = [
     "ConnectionMetadata",
     "ZoneTypes",
     "HubType",
-    "Colors"
+    "Colors",
+    "TextBox"
     ]

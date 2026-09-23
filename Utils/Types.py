@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Tuple
 
 
 class Colors(Enum):
@@ -79,3 +80,12 @@ class HubType(str, Enum):
     start_hub = "start_hub"
     hub = "hub"
     end_hub = "end_hub"
+
+
+class TextBox:
+    def __init__(self, content: str,
+                 start: Tuple[int, int] = (0, 0),
+                 end: Tuple[int, int] = (0, 0)) -> None:
+        self.content = content
+        self.start = start
+        self.end = end

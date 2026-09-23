@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 import tomllib
+from typing import Tuple
 
 
 class WindowConfig(BaseModel):
@@ -12,9 +13,12 @@ class WindowConfig(BaseModel):
     bg_points_effect: int = 0xCECECEFF
 
     font_color: int = 0xffffffff
+    banner_color: int = 0xffffffff
 
     enable_hub_name: bool = False
     enable_connection_txt: bool = True
+
+    enable_drones_path: bool = True
 
     x_gap: int = 42
     y_gap: int = 92
@@ -29,3 +33,4 @@ class WindowConfig(BaseModel):
         return WindowConfig(**content["window"], **content["map"])
 
         pass
+

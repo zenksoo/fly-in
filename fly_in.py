@@ -1,7 +1,7 @@
 from MLX.libmlx import mlx, mlx_t, mlx_loop_hook_func, c_void_p, mlx_keyfunc
 from MLX.libmlx import MLX_KEY_E, MLX_KEY_R, MLX_KEY_RIGHT, MLX_KEY_LEFT, MLX_KEY_SPACE
 import argparse
-from Visualizer import MlxVisualizer, WindowConfig
+from Visualizer import MlxVisualizer, WindowConfig, MlxCanvas
 from Parser import MapParser
 from CExceptions import MapParserError
 from sys import stderr
@@ -49,20 +49,35 @@ def movement_animation(param: int) -> None:
         RESET = False
         ALL_ARRIVED = False
         TURN = 0
+        window._update_hub_capacity_label()
+
+        MOVED_DRONES = window._get_moved_drones(TURN)
+        MlxCanvas._change_label_content(window.text_layer, window.turns_label, "TURN: 00")
+        window.drones_layer = MlxCanvas._erase_mlximg(window.mlx_ptr, window.drones_layer)
+
 
     if not RUN_ANIMATION or ALL_ARRIVED : return
 
-    MOVED_DRONES = window._get_moved_drones(TURN)
-
     if RUN_ANIMATION:
+        window._update_hub_capacity_label()
         for drone in MOVED_DRONES:
-            print(drone.id)
-            drone._move_toward(SPEED)
+            print(drone.id, drone.distination.name)
+        for drone in MOVED_DRONES:
+            window._move_toward(drone, SPEED, window.wcfg.enable_drones_path)
 
-    if all([d._has_arrived() for d in MOVED_DRONES]):
-        TURN += 1
-    if TURN >= len(window.solution):
-        ALL_ARRIVED = True
+        if all([d.arrived for d in MOVED_DRONES]):
+
+            TURN += 1
+            if TURN < len(window.solution):
+                MOVED_DRONES = window._get_moved_drones(TURN)
+            if (TURN > 9):
+                new_content = f"TURN: {TURN}"
+            else:
+                new_content = f"TURN: 0{TURN}"
+            MlxCanvas._change_label_content(window.text_layer, window.turns_label, new_content)
+        if TURN >= len(window.solution):
+            ALL_ARRIVED = True
+
 
 
 @mlx_keyfunc
@@ -89,9 +104,15 @@ def handel_input(key, param: int) -> None:
     elif (key.key ==  MLX_KEY_LEFT):
         if SPEED > 0.5:
             SPEED -= 0.5
+            MlxCanvas._change_label_content(window.text_layer,
+                                            window.speed_status,
+                                            f"SPEED: {SPEED}")
     elif (key.key == MLX_KEY_RIGHT):
         if (SPEED < 6):
             SPEED += 0.5
+            MlxCanvas._change_label_content(window.text_layer,
+                                            window.speed_status,
+                                            f"SPEED: {SPEED}")
     elif (key.key == MLX_KEY_SPACE):
         if not RUN_ANIMATION:
             RUN_ANIMATION = True
@@ -103,7 +124,6 @@ def main() -> None:
     print("\033[H\033[J")
     args = cli_argument_parser()
     try:
-        window_config = WindowConfig._from_file(CONFIG_PATH)
         map_data: MapParser = MapParser.from_file(args.map)
 
         window = MlxVisualizer(CONFIG_PATH, map_data)
@@ -112,7 +132,6 @@ def main() -> None:
         window.init_map()
         window.solution = [
     ["D1-gate", "D2-gate", "D3-gate", "D4-gate", "D5-gate", "D6-gate", "D7-start", "D8-start", "D9-start", "D10-start", "D11-start", "D12-start"],
-    ["D1-gate", "D2-gate", "D3-gate", "D4-gate", "D5-gate", "D6-gate"],
     ["D1-A3", "D2-A2", "D3-A1", "D4-A1", "D7-gate", "D8-gate", "D9-gate", "D10-gate"],
     ["D1-A3", "D2-A2", "D3-A1", "D4-A1", "D7-gate", "D8-gate", "D9-gate", "D10-gate", "D11-gate", "D12-gate"],
     ["D1-B2", "D2-B2", "D3-B1", "D4-B1", "D5-A3", "D6-A2", "D7-A1", "D8-A1", "D11-gate", "D12-gate"],
@@ -124,15 +143,23 @@ def main() -> None:
     ["D11-E", "D12-E"],
 ]
 
-        # mlx.mlx_loop_hook(WINDOW.mlx_ptr, handel_input,
-        #                   ctypes.cast(WINDOW.mlx_ptr, c_void_p))
+        # window.solution = [
+        #     ["D1-waypoint1", "D2-waypoint1"],
+        #     ["D1-waypoint2", "D2-waypoint2"],
+        #     ["D1-goal", "D2-goal"]
+        # ]
+        window._update_hub_capacity_label()
+        global MOVED_DRONES
+
+        MOVED_DRONES = window._get_moved_drones(TURN)
+
 
         mlx.mlx_loop_hook(window.mlx_ptr, movement_animation,
                           ctypes.cast(id(window), c_void_p))
 
         mlx.mlx_key_hook(window.mlx_ptr, handel_input,
                          ctypes.cast(id(window), c_void_p))
-        
+
         mlx.mlx_loop(window.mlx_ptr)
     except ValueError as e:
         print(e, file=stderr)

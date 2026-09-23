@@ -37,13 +37,15 @@ class KinematicEntity2D:
     def __init__(self, id: str) -> None:
         self.id = id
         self.position: Tuple[float, float]
-        self.distination: Tuple[int, int]
+        self.distination: Hub
+        self.color: Colors
+        self.arrived: bool = False
         self.mlximg: mlx_image_t
 
     def _get_vector_direction_to(self) -> Tuple[float, float]:
 
-        sx = self.distination[0] - self.position[0]
-        sy = self.distination[1] - self.position[1]
+        sx = self.distination.x - self.position[0]
+        sy = self.distination.y - self.position[1]
 
         step = max(abs(sx), abs(sy))
 
@@ -58,26 +60,26 @@ class KinematicEntity2D:
             return
 
         direction = self._get_vector_direction_to()
-        self.position = (self.position[0] + (direction[0] * SPEED * (random.random() + 0.5)),
-                          self.position[1] + (direction[1] * SPEED * (random.random() + 0.5)))
 
-        self.mlximg.contents.instances[0].x = round(self.position[0])
-        self.mlximg.contents.instances[0].y = round(self.position[1])
+        img_w, img_h = (self.mlximg.contents.width, self.mlximg.contents.height)
+
+        new_pos_x = self.position[0] + direction[0] * SPEED * (random.random() * 2)
+        new_pos_y = self.position[1] + direction[1] * SPEED * (random.random() * 2)
+
+
+        self.position = (new_pos_x, new_pos_y)
+
+        self.mlximg.contents.instances[0].x = round(self.position[0]) - img_w // 2
+        self.mlximg.contents.instances[0].y = round(self.position[1]) - img_h // 2
 
     def _has_arrived(self) -> bool:
-        hub_w = self.mlximg.contents.width
-        hub_h = self.mlximg.contents.height
-
-        padding_x = (hub_w - 40) // 2
-        padding_y = (hub_h - 40) // 2
-
         x, y = (self.position[0], self.position[1])
 
-        # print(x, y)
-        # print(self.distination[0], self.distination[1])
-
-        if ((x >= self.distination[0] - 5 and x <= self.distination[0] + 5) and
-            (y >= self.distination[1] - 5 and y <= self.distination[1] + 5)):
+        if ((x >= self.distination.x - 5 and x <= self.distination.x + 5) and
+            (y >= self.distination.y - 5 and y <= self.distination.y + 5)):
+            if not self.arrived:
+                self.distination.droneCount += 1
+                self.arrived = True
             return True
         return False
 
@@ -94,7 +96,7 @@ class HubMetaData(BaseModel):
     max_drones: int = Field(default=1, gt=0)
 
 
-class HUBGfx:
+class HUBGfx(BaseModel):
     w: int = 0
     h: int = 0
     top_label: dict[str, Tuple[int, int]] = {
@@ -111,6 +113,7 @@ class Hub(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
     name: str
     type: HubType
+    droneCount: int = 0
     x: int
     y: int
     mlx_img: mlx_image_t | None = None

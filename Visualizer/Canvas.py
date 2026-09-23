@@ -18,7 +18,7 @@ class MlxCanvas:
         img.contents.pixels[idx + 3] = pixel_color & 0xFF
 
     @staticmethod
-    def _create_layer(mlx_ptr: mlx_t, z: int, width: int | None = None,
+    def _create_layer(mlx_ptr: mlx_t, x: int, y: int,  z: int, width: int | None = None,
                     height: int | None = None) -> mlx_image_t:
         if not width:
             width = mlx_ptr.contents.width
@@ -29,11 +29,30 @@ class MlxCanvas:
         img: mlx_image_t = mlx.mlx_new_image(mlx_ptr,
                                              width, height)
 
-        mlx.mlx_image_to_window(mlx_ptr, img, 0, 0)
+        mlx.mlx_image_to_window(mlx_ptr, img, x, y)
 
         img.contents.instances[0].z = z
 
         return img
+
+    @staticmethod
+    def _erase_mlximg(mlx_ptr: mlx_t, img: mlx_image_t) -> mlx_image_t:
+        w, h = (img.contents.width, img.contents.height)
+        x, y, z = (
+            img.contents.instances[0].x,
+            img.contents.instances[0].y,
+            img.contents.instances[0].z
+        )
+
+        mlx.mlx_delete_image(mlx_ptr, img)
+
+        img = mlx.mlx_new_image(mlx_ptr, w, h)
+        mlx.mlx_image_to_window(mlx_ptr, img, x, y)
+
+        img.contents.instances[0].z = z
+
+        return img
+
 
     @staticmethod
     def _fill_window_bg(img: mlx_image_t, color: int | Colors,
@@ -59,8 +78,8 @@ class MlxCanvas:
     @staticmethod
     def _load_png_to_mlximg(layer: mlx_image_t,
                             png: str | Image.Image, x: int, y: int,
-                            replacement_color: Colors | None = None,
-                            source_color: Colors | None = None) -> None:
+                            replacement_color: Colors | int | None = None,
+                            source_color: Colors | int | None = None) -> None:
 
         rainbow_colors = [Colors.red, Colors.orange, Colors.yellow,
                           Colors.green,  Colors.blue, Colors.indigo,
@@ -72,6 +91,11 @@ class MlxCanvas:
 
         png_w, png_h = png.size
 
+        if isinstance(replacement_color, Colors):
+            replacement_color = replacement_color.value
+        if isinstance(source_color, Colors):
+            source_color = source_color.value
+
         for png_y in range(png_h):
             if png_y and png_y % int(png_h / len(rainbow_colors)) == 0:
                 rainbow_idx += 1
@@ -81,11 +105,11 @@ class MlxCanvas:
                 color = pack_rgba(*png.getpixel((png_x, png_y)))
 
                 if (replacement_color and source_color and
-                   color == source_color.value):
+                   color == source_color):
                     if replacement_color == Colors.rainbow:
                         color = rainbow_colors[rainbow_idx].value
                     else:
-                        color = replacement_color.value
+                        color = replacement_color
 
                 MlxCanvas._put_pixel(layer, x + png_x, y + png_y, color)
 
@@ -211,11 +235,15 @@ class MlxCanvas:
         vx = -dy
         vy = dx
 
+        r = 1
+        if not half:
+            r = 0
+
         for i in range(-half, half + 1):
             x = round(x0 + (vx * i))
             y = round(y0 + (vy * i))
             for i in range(step):
-                MlxCanvas._draw_circle(layer, round(x), round(y), 1, pixel_color)
+                MlxCanvas._draw_circle(layer, round(x), round(y), r, pixel_color)
                 x += dx
                 y += dy
 
