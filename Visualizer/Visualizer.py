@@ -16,9 +16,9 @@ BANNER_PATH = "./Assets/images/banner.png"
 
 BACKGROUND_LAYER = 0
 CONNECTIONS_LAYER = 1
-HUBS_LAYER = 2
+HUBS_LAYER = 4
 TEXT_LAYER = 3
-DRONE_LAYER = 4
+DRONE_LAYER = 2
 BANNER_LAYER = 5
 
 
@@ -175,7 +175,7 @@ class MlxVisualizer:
 
             coord_x = start_hub.x - png_w // 2
             coord_y = start_hub.y - png_h // 2
-            coord_z = DRONE_LAYER + i + 1
+            coord_z = HUBS_LAYER + i + 1
 
             drone.mlximg = MlxCanvas._create_layer(self.mlx_ptr, coord_x, coord_y, coord_z, png_w, png_h)
 

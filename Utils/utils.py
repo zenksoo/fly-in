@@ -63,8 +63,8 @@ class KinematicEntity2D:
 
         img_w, img_h = (self.mlximg.contents.width, self.mlximg.contents.height)
 
-        new_pos_x = self.position[0] + direction[0] * SPEED * (random.random() * 2)
-        new_pos_y = self.position[1] + direction[1] * SPEED * (random.random() * 2)
+        new_pos_x = self.position[0] + direction[0] * SPEED * (random.random())
+        new_pos_y = self.position[1] + direction[1] * SPEED * (random.random())
 
 
         self.position = (new_pos_x, new_pos_y)

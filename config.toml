@@ -2,11 +2,11 @@
 title          = "Fly-In"
 resizing       = false
 min_width      = 600
-bg_color        = 0x08041DD2
+bg_color        = 0x08041DFF
 
 bg_points_effect= 0xCDCDCDFF
 font_color      = 0xFFFFFFFF
-banner_color    = 0x5A0C64FF
+banner_color    = 0xFFFFFFFF
 
 enable_hub_name= true
 enable_connection_txt = true
