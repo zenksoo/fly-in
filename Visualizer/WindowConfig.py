@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 import tomllib
 from typing import Tuple
-
+from Parser import MapParser
 
 class WindowConfig(BaseModel):
     title: str = "Fly-in"
@@ -25,12 +25,11 @@ class WindowConfig(BaseModel):
     padding_x: int = 64
     padding_y: int = 120
 
+
     @staticmethod
     def _from_file(file_path: str) -> "WindowConfig":
         with open(file_path, 'rb') as f:
             content = tomllib.load(f)
 
         return WindowConfig(**content["window"], **content["map"])
-
-        pass
 

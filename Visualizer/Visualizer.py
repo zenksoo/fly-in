@@ -1,16 +1,18 @@
-from MLX.libmlx import mlx, mlx_t, mlx_image_t, mlx_loop_hook_func
+from MLX.libmlx import mlx, mlx_t, mlx_image_t, mlx_keyfunc
+from MLX.libmlx import MLX_KEY_E, MLX_KEY_R, MLX_KEY_SPACE, MLX_KEY_LEFT, MLX_KEY_RIGHT
 from PIL import Image
 from Utils import Drone, Hub, HubType, Connection, Colors
 from typing import List, Tuple, Any
 from Parser import MapParser
 import tomllib
 from typing import Dict
-from .wcfg import WindowConfig
+from .WindowConfig import WindowConfig
 from .Canvas import MlxCanvas
 import random
 import ctypes
-import time
+import os
 from datetime import datetime
+
 
 BANNER_PATH = "./Assets/images/banner.png"
 
@@ -23,34 +25,11 @@ BANNER_LAYER = 5
 
 
 class MlxVisualizer:
-    def __init__(self, config_file: str, map_data: MapParser) -> None:
+    def __init__(self, config_file: str) -> None:
+        from Simulation import DroneSimulation
         self.mlx_ptr: mlx_t
-
+        self.simulation: DroneSimulation
         self.wcfg: WindowConfig = WindowConfig._from_file(config_file)
-        self.solution : List[List[str]] = []
-        self.map_data = map_data
-        self.run_animation = False
-
-    def _add_png_to_window(self, png: str | Image.Image,
-                           x: int, y: int, z: int,
-                           target_color: Colors | int | None = None,
-                           changed_color: Colors | int | None = None
-                           ) -> mlx_image_t:
-        print(target_color, changed_color)
-        if isinstance(png, str):
-            png = Image.open(png).convert("RGBA")
-
-        img_w, img_h = png.size
-
-        mlx_img: mlx_image_t = mlx.mlx_new_image(self.mlx_ptr, img_w, img_h)
-        mlx.mlx_image_to_window(self.mlx_ptr, mlx_img, x, y)
-
-        mlx_img.contents.instances[0].z = z
-        MlxCanvas._load_png_to_mlximg(mlx_img, png, 0, 0,
-                                   target_color, changed_color)
-
-        return mlx_img
-
 
     @staticmethod
     def _get_window_resolution(cfg: WindowConfig, hubs: List[Hub]) -> Tuple[int, int]:
@@ -76,9 +55,7 @@ class MlxVisualizer:
         return (width, height)
 
     def render_hubs(self) -> None:
-        for hub_name in self.map_data.hubs.keys():
-
-            hub = self.map_data.hubs[hub_name]
+        for hub in self.simulation.map_data.hubs.values():
             print(hub.name, hub.x, hub.y)
             hub_png: str = "./Assets/images/hub_normal.png"
             if hub.metadata.zone == "priority":
@@ -113,7 +90,7 @@ class MlxVisualizer:
             text_x = hub.x - hub.gfx.w // 2
             text_y = hub.y - hub.gfx.h // 2
             if (hub.type == HubType.start_hub or hub.type == HubType.end_hub):
-                hub.metadata.max_drones = self.map_data.ndrones
+                hub.metadata.max_drones = self.simulation.map_data.ndrones
 
             hub.gfx.top_label = MlxCanvas._draw_text(
                 self.text_layer, hub.name, text_x, text_y - 12,
@@ -156,8 +133,8 @@ class MlxVisualizer:
                     f"0{con.metadata.max_link_capacity}",
                     text_x, text_y, self.wcfg.font_color)
 
-    def setup_drones(self, hubs: Dict[str, Hub], n_drones: int) -> None:
-        self.drones: Dict[str, Drone] = {}
+    def setup_drones(self, hubs: Dict[str, Hub], n_drones: int) -> Dict[str, Drone]:
+        drones: Dict[str, Drone] = {}
 
         start_hub = [
             hub for hub in hubs.values() if hub.type == HubType.start_hub
@@ -185,32 +162,32 @@ class MlxVisualizer:
             drone.color = random.choice(drone_colors)
             MlxCanvas._load_png_to_mlximg(drone.mlximg, drone_png, 0, 0,
                                           drone.color, Colors.blue)
-            self.drones[drone.id] = drone
+            drones[drone.id] = drone
         start_hub.droneCount = n_drones
+        return drones
 
-    def _reset_drones_position(self) -> None:
+    def _reset_drones_position(self, drones: Dict[str, Drone]) -> None:
         start_hub = [
-            hub for hub in self.map_data.hubs.values() if hub.type == HubType.start_hub
+            hub for hub in self.simulation.map_data.hubs.values() if hub.type == HubType.start_hub
             ][0]
 
-        png_w = list(self.drones.values())[0].mlximg.contents.width
-        png_h = list(self.drones.values())[0].mlximg.contents.height
+        png_w = list(drones.values())[0].mlximg.contents.width
+        png_h = list(drones.values())[0].mlximg.contents.height
 
         x = start_hub.x - png_w // 2
         y = start_hub.y - png_h // 2
 
-        for drone in self.drones.values():
+        for drone in drones.values():
             if drone.arrived:
                 drone.distination.droneCount -= 1
             drone.position = (x, y)
-            drone.mlximg.contents.instances[0].x = x + round(5 * random.random())
-            drone.mlximg.contents.instances[0].y = y + round(5 * random.random())
+            self.update_drone_position(drone, (5 * random.random(), 5 * random.random()))
             drone.distination = start_hub
 
-        start_hub.droneCount = len(self.drones.values())
+        start_hub.droneCount = len(drones.values())
 
 
-    def _window_footer(self, texts: List[str]) -> None:
+    def _render_footer(self, texts: List[str]) -> None:
         x = self.wcfg.padding_x
         y = self.mlx_ptr.contents.height - int(self.wcfg.padding_y / 2)
 
@@ -253,7 +230,7 @@ class MlxVisualizer:
             MlxCanvas._draw_text(self.text_layer, txt, x, y, self.wcfg.font_color)
             x += text_blk
 
-    def _add_boxed_label(self, st_x: int, st_y: int, text: str) -> Dict[str, Tuple[int, int]]:
+    def add_labeled_box(self, st_x: int, st_y: int, text: str) -> Dict[str, Tuple[int, int]]:
         end_x = st_x + 6 * len(text) + 32
         end_y = st_y + 18
 
@@ -272,7 +249,7 @@ class MlxVisualizer:
                                  self.wcfg.font_color)
 
     def init_window(self) -> None:
-        hubs = list(self.map_data.hubs.values())
+        hubs = list(self.simulation.map_data.hubs.values())
 
         self.w, self.h = self._get_window_resolution(self.wcfg, hubs)
 
@@ -291,8 +268,14 @@ class MlxVisualizer:
         banner_x = (self.w - banner_img.size[0]) // 2
         banner_y = (self.wcfg.padding_y - banner_img.size[1]) // 2
 
-        self._add_png_to_window(banner_img, banner_x, banner_y, BANNER_LAYER,
-                                self.wcfg.banner_color, Colors.white.value)
+        self.banner = MlxCanvas._create_layer(self.mlx_ptr, banner_x, banner_y, BANNER_LAYER,
+                                              banner_img.size[0], banner_img.size[1])
+
+        MlxCanvas._load_png_to_mlximg(self.banner, banner_img, 0, 0,
+                                      self.wcfg.banner_color, Colors.white.value)
+
+        # self._add_png_to_window(banner_img, banner_x, banner_y, BANNER_LAYER,
+        #                         self.wcfg.banner_color, Colors.white.value)
 
         # draw line under the padding_y at the top and above them in the bottom
         st_x = self.wcfg.padding_x
@@ -313,23 +296,23 @@ class MlxVisualizer:
         ndrone_label_st_x = self.wcfg.padding_x
         ndrone_label_st_y = self.wcfg.padding_y - 18
 
-        self.turns_label = self._add_boxed_label(ndrone_label_st_x, ndrone_label_st_y, "TURN: 00")
+        self.turns_label = self.add_labeled_box(ndrone_label_st_x, ndrone_label_st_y, "TURN: 00")
 
         # add speed label status
         speed_label_st_x = self.wcfg.padding_x + 100
         speed_label_st_y = self.wcfg.padding_y - 18
 
-        self.speed_status = self._add_boxed_label(speed_label_st_x, speed_label_st_y, "SPEED: 1.0")
+        self.speed_status = self.add_labeled_box(speed_label_st_x, speed_label_st_y, "SPEED: 1.0")
 
     def init_map(self) -> None:
 
         self.render_hubs()
 
-        self.render_connections(self.map_data.connections,
-                                self.map_data.hubs)
+        self.render_connections(self.simulation.map_data.connections,
+                                self.simulation.map_data.hubs)
 
 
-        self._window_footer([
+        self._render_footer([
             f"WIDTH: {self.mlx_ptr.contents.width}",
             f"HEIGHT: {self.mlx_ptr.contents.height}",
             "SPACE: RUN / PAUSE",
@@ -337,61 +320,62 @@ class MlxVisualizer:
             "<|: SLOWER"
         ])
 
-        self.setup_drones(self.map_data.hubs, self.map_data.ndrones)
-
-    def _get_moved_drones(self, turn: int) -> List[Drone]:
-        moved_drones: List[Drone] = []
-
-        turn_solution = self.solution[turn]
-
-        for st in turn_solution:
-            drone_id, hub_name = st.split("-")
-            drone = self.drones[drone_id]
-            hub = self.map_data.hubs[hub_name]
-
-            if drone.distination != hub and drone.distination.droneCount > 0:
-                drone.distination.droneCount -= 1
-                drone.distination = hub
-                drone.arrived = False
-
-                moved_drones.append(drone)
-
-        return moved_drones
+        self.simulation.drones= self.setup_drones(self.simulation.map_data.hubs, self.simulation.map_data.ndrones)
 
     def _update_hub_capacity_label(self) -> None:
-        for hub in self.map_data.hubs.values():
+        for hub in self.simulation.map_data.hubs.values():
             new_text = f"0{hub.droneCount}/{hub.metadata.max_drones}"
             if (hub.droneCount > 9):
                 new_text = f"{hub.droneCount}/{hub.metadata.max_drones}"
 
-            MlxCanvas._change_label_content(self.text_layer,
+            MlxCanvas._update_text(self.text_layer,
                                             hub.gfx.bottom_label,
                                             new_text)
 
-    def _move_toward(self, drone: Drone, SPEED: float = 1.0, show_path: bool = False) -> None:
+    @staticmethod
+    def update_drone_position(drone: Drone, shift_pos: Tuple[float, float]) -> None:
+        new_pos_x = drone.position[0] + shift_pos[0]
+        new_pos_y = drone.position[1] + shift_pos[1]
 
-        if drone._has_arrived():
-            return
+        drone.mlximg.contents.instances[0].x = round(new_pos_x)
+        drone.mlximg.contents.instances[0].y = round(new_pos_y)
 
-        direction = drone._get_vector_direction_to()
+    @mlx_keyfunc
+    @staticmethod
+    def handel_input(key, param: int) -> None:
+        # 1 -> key pressed
+        # 0 -> key up
+        # 2 -> key down = hover
 
-        img_w, img_h = (drone.mlximg.contents.width, drone.mlximg.contents.height)
+        if key.action != 0: return
 
-        new_pos_x = drone.position[0] + direction[0] * SPEED * (random.random() * 4)
-        new_pos_y = drone.position[1] + direction[1] * SPEED * (random.random() * 4)
+        visualizer: MlxVisualizer = ctypes.cast(param, ctypes.py_object).value
+        simulation = visualizer.simulation
 
-        if show_path:
-            MlxCanvas._draw_line(self.drones_layer,
-                                 round(drone.position[0]),
-                                 round(drone.position[1]),
-                                 round(new_pos_x),
-                                 round(new_pos_y),
-                                 0, drone.color.value)
+        if (key.key == MLX_KEY_E):
+            os._exit(0)
+        elif (key.key == MLX_KEY_R):
+            simulation.reset_drones_position()
+            simulation.RESET = True
+            simulation.RUN_ANIMATION = False
+        elif (key.key ==  MLX_KEY_LEFT):
+            if simulation.SPEED > 0.5:
+                simulation.SPEED -= 0.5
+                MlxCanvas._update_text(visualizer.text_layer,
+                                                visualizer.speed_status,
+                                                f"SPEED: {simulation.SPEED}")
+        elif (key.key == MLX_KEY_RIGHT):
+            if (simulation.SPEED < 6):
+                simulation.SPEED += 0.5
+                MlxCanvas._update_text(visualizer.text_layer,
+                                                visualizer.speed_status,
+                                                f"SPEED: {simulation.SPEED}")
+        elif (key.key == MLX_KEY_SPACE):
+            if not simulation.RUN_ANIMATION:
+                simulation.RUN_ANIMATION = True
+            else:
+                simulation.RUN_ANIMATION = False
 
-        drone.position = (new_pos_x, new_pos_y)
-
-        drone.mlximg.contents.instances[0].x = round(drone.position[0]) - img_w // 2
-        drone.mlximg.contents.instances[0].y = round(drone.position[1]) - img_h // 2
 
 
 

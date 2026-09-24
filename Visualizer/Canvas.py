@@ -36,7 +36,7 @@ class MlxCanvas:
         return img
 
     @staticmethod
-    def _erase_mlximg(mlx_ptr: mlx_t, img: mlx_image_t) -> mlx_image_t:
+    def _clear_image(mlx_ptr: mlx_t, img: mlx_image_t) -> mlx_image_t:
         w, h = (img.contents.width, img.contents.height)
         x, y, z = (
             img.contents.instances[0].x,
@@ -177,6 +177,15 @@ class MlxCanvas:
             for x in range(start[0], end[0] + 1):
                 MlxCanvas._put_pixel(text_layer, x, y, 0x00000000)
 
+    @staticmethod
+    def _update_text(
+            layer: mlx_image_t,
+            label_coord: Dict[str, Tuple[int, int]],
+            new_content: str) -> None:
+
+        MlxCanvas._delete_text(layer, label_coord["start"], label_coord["end"])
+        MlxCanvas._draw_text(layer, new_content, label_coord["start"][0],
+                          label_coord["start"][1])
 
     @staticmethod
     def _draw_circle(layer: mlx_image_t, cx: int, cy: int, r: int, pixel_color: int) -> None:
@@ -215,7 +224,6 @@ class MlxCanvas:
 
             x += 1
 
-
     @staticmethod
     def _draw_line(layer: mlx_image_t, x0: int, y0: int,
                    x1: int, y1: int, thickness: int,
@@ -246,13 +254,3 @@ class MlxCanvas:
                 MlxCanvas._draw_circle(layer, round(x), round(y), r, pixel_color)
                 x += dx
                 y += dy
-
-    @staticmethod
-    def _change_label_content(
-            layer: mlx_image_t,
-            label_coord: Dict[str, Tuple[int, int]],
-            new_content: str) -> None:
-
-        MlxCanvas._delete_text(layer, label_coord["start"], label_coord["end"])
-        MlxCanvas._draw_text(layer, new_content, label_coord["start"][0],
-                          label_coord["start"][1])

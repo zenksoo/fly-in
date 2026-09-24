@@ -8,23 +8,11 @@ from sys import stderr
 import os
 import ctypes
 from typing import List
-
+from Simulation import DroneSimulation
 from Utils import Drone
 
 CONFIG_PATH = "./config.toml"
 
-RUN_ANIMATION = False
-ALL_ARRIVED: bool = False
-TURN: int = 0
-
-MOVED_DRONES: List[Drone] = []
-SOLUTION: List[List[str]]
-
-SPEED: float = 1
-
-RESET: bool = False
-
-IS_KEY_DOWN = False
 
 def cli_argument_parser() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Fly-In")
@@ -36,101 +24,23 @@ def cli_argument_parser() -> argparse.Namespace:
     return parser.parse_args()
 
 
-@mlx_loop_hook_func
-def movement_animation(param: int) -> None:
-    global MOVED_DRONES
-    global ALL_ARRIVED
-    global TURN
-    global RESET
-
-    window: MlxVisualizer = ctypes.cast(param, ctypes.py_object).value
-
-    if RESET:
-        RESET = False
-        ALL_ARRIVED = False
-        TURN = 0
-        window._update_hub_capacity_label()
-
-        MOVED_DRONES = window._get_moved_drones(TURN)
-        MlxCanvas._change_label_content(window.text_layer, window.turns_label, "TURN: 00")
-        window.drones_layer = MlxCanvas._erase_mlximg(window.mlx_ptr, window.drones_layer)
-
-
-    if not RUN_ANIMATION or ALL_ARRIVED : return
-
-    if RUN_ANIMATION:
-        window._update_hub_capacity_label()
-        for drone in MOVED_DRONES:
-            print(drone.id, drone.distination.name)
-        for drone in MOVED_DRONES:
-            window._move_toward(drone, SPEED, window.wcfg.enable_drones_path)
-
-        if all([d.arrived for d in MOVED_DRONES]):
-
-            TURN += 1
-            if TURN < len(window.solution):
-                MOVED_DRONES = window._get_moved_drones(TURN)
-            if (TURN > 9):
-                new_content = f"TURN: {TURN}"
-            else:
-                new_content = f"TURN: 0{TURN}"
-            MlxCanvas._change_label_content(window.text_layer, window.turns_label, new_content)
-        if TURN >= len(window.solution):
-            ALL_ARRIVED = True
-
-
-
-@mlx_keyfunc
-def handel_input(key, param: int) -> None:
-    global SPEED
-    global RESET
-    global IS_KEY_DOWN
-    global RUN_ANIMATION
-
-    # 1 -> key pressed
-    # 0 -> key up
-    # 2 -> key down = hover
-
-    if key.action != 0: return
-
-    window: MlxVisualizer = ctypes.cast(param, ctypes.py_object).value
-
-    if (key.key == MLX_KEY_E):
-        os._exit(0)
-    elif (key.key == MLX_KEY_R):
-        window._reset_drones_position()
-        RESET = True
-        RUN_ANIMATION = False
-    elif (key.key ==  MLX_KEY_LEFT):
-        if SPEED > 0.5:
-            SPEED -= 0.5
-            MlxCanvas._change_label_content(window.text_layer,
-                                            window.speed_status,
-                                            f"SPEED: {SPEED}")
-    elif (key.key == MLX_KEY_RIGHT):
-        if (SPEED < 6):
-            SPEED += 0.5
-            MlxCanvas._change_label_content(window.text_layer,
-                                            window.speed_status,
-                                            f"SPEED: {SPEED}")
-    elif (key.key == MLX_KEY_SPACE):
-        if not RUN_ANIMATION:
-            RUN_ANIMATION = True
-        else:
-            RUN_ANIMATION = False
-
-
 def main() -> None:
     print("\033[H\033[J")
     args = cli_argument_parser()
     try:
         map_data: MapParser = MapParser.from_file(args.map)
 
-        window = MlxVisualizer(CONFIG_PATH, map_data)
+        visualizer = WindowConfig._from_file(CONFIG_PATH)
 
-        window.init_window()
-        window.init_map()
-        window.solution = [
+        simulation = DroneSimulation(map_data)
+
+        visualizer = MlxVisualizer(CONFIG_PATH)
+
+        visualizer.simulation = simulation
+
+        visualizer.init_window()
+        visualizer.init_map()
+        simulation.solution = [
     ["D1-gate", "D2-gate", "D3-gate", "D4-gate", "D5-gate", "D6-gate", "D7-start", "D8-start", "D9-start", "D10-start", "D11-start", "D12-start"],
     ["D1-A3", "D2-A2", "D3-A1", "D4-A1", "D7-gate", "D8-gate", "D9-gate", "D10-gate"],
     ["D1-A3", "D2-A2", "D3-A1", "D4-A1", "D7-gate", "D8-gate", "D9-gate", "D10-gate", "D11-gate", "D12-gate"],
@@ -148,19 +58,18 @@ def main() -> None:
         #     ["D1-waypoint2", "D2-waypoint2"],
         #     ["D1-goal", "D2-goal"]
         # ]
-        window._update_hub_capacity_label()
-        global MOVED_DRONES
+        visualizer._update_hub_capacity_label()
 
-        MOVED_DRONES = window._get_moved_drones(TURN)
+        simulation._update_moved_drones()
 
 
-        mlx.mlx_loop_hook(window.mlx_ptr, movement_animation,
-                          ctypes.cast(id(window), c_void_p))
+        mlx.mlx_loop_hook(visualizer.mlx_ptr, simulation.movement_animation,
+                          ctypes.cast(id(visualizer), c_void_p))
 
-        mlx.mlx_key_hook(window.mlx_ptr, handel_input,
-                         ctypes.cast(id(window), c_void_p))
+        mlx.mlx_key_hook(visualizer.mlx_ptr, visualizer.handel_input,
+                         ctypes.cast(id(visualizer), c_void_p))
 
-        mlx.mlx_loop(window.mlx_ptr)
+        mlx.mlx_loop(visualizer.mlx_ptr)
     except ValueError as e:
         print(e, file=stderr)
         exit(1)
