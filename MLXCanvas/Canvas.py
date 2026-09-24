@@ -1,9 +1,7 @@
 from MLX.libmlx import mlx, mlx_image_t, mlx_t
 from PIL import Image
 from Utils import pack_rgba, Colors
-# from CExceptions import CanvasError
 from typing import Dict, Tuple
-import math
 
 
 class MlxCanvas:

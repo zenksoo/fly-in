@@ -2,7 +2,6 @@ from pydantic import BaseModel, Field, ConfigDict
 from .Types import ZoneTypes, HubType, Colors
 from typing import Tuple
 from MLX.libmlx import mlx_image_t
-import random
 
 def pack_rgba(r: int, g: int, b: int, a: int) -> int:
     return (r << 24) | (g << 16) | (b << 8) | a
@@ -33,7 +32,7 @@ def HexColor_to_decimal(hex_color: str) -> int:
         raise ValueError(
             "Invalid HexDecimal Value, (e.g #fff #ffffff #ffff #ffffffff)")
 
-class KinematicEntity2D:
+class Drone():
     def __init__(self, id: str) -> None:
         self.id = id
         self.position: Tuple[float, float]
@@ -41,52 +40,6 @@ class KinematicEntity2D:
         self.color: Colors
         self.arrived: bool = False
         self.mlximg: mlx_image_t
-
-    def _get_vector_direction_to(self) -> Tuple[float, float]:
-
-        sx = self.distination.x - self.position[0]
-        sy = self.distination.y - self.position[1]
-
-        step = max(abs(sx), abs(sy))
-
-        dx = sx / step
-        dy = sy / step
-
-        return (dx, dy)
-
-    def _move_toward(self, SPEED: float = 1.0) -> None:
-
-        if self._has_arrived():
-            return
-
-        direction = self._get_vector_direction_to()
-
-        img_w, img_h = (self.mlximg.contents.width, self.mlximg.contents.height)
-
-        new_pos_x = self.position[0] + direction[0] * SPEED * (random.random())
-        new_pos_y = self.position[1] + direction[1] * SPEED * (random.random())
-
-
-        self.position = (new_pos_x, new_pos_y)
-
-        self.mlximg.contents.instances[0].x = round(self.position[0]) - img_w // 2
-        self.mlximg.contents.instances[0].y = round(self.position[1]) - img_h // 2
-
-    def _has_arrived(self) -> bool:
-        x, y = (self.position[0], self.position[1])
-
-        if ((x >= self.distination.x - 5 and x <= self.distination.x + 5) and
-            (y >= self.distination.y - 5 and y <= self.distination.y + 5)):
-            if not self.arrived:
-                self.distination.droneCount += 1
-                self.arrived = True
-            return True
-        return False
-
-
-class Drone(KinematicEntity2D):
-    def __init__(self, id: str) -> None:
-        super().__init__(id)
 
 
 

@@ -1,15 +1,11 @@
-from MLX.libmlx import mlx, mlx_t, mlx_loop_hook_func, c_void_p, mlx_keyfunc
-from MLX.libmlx import MLX_KEY_E, MLX_KEY_R, MLX_KEY_RIGHT, MLX_KEY_LEFT, MLX_KEY_SPACE
+from MLX.libmlx import mlx, c_void_p
 import argparse
-from Visualizer import MlxVisualizer, WindowConfig, MlxCanvas
+from Visualizer import MlxVisualizer, WindowConfig
 from Parser import MapParser
-from CExceptions import MapParserError
 from sys import stderr
-import os
 import ctypes
-from typing import List
 from Simulation import DroneSimulation
-from Utils import Drone
+
 
 CONFIG_PATH = "./config.toml"
 

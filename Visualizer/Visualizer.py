@@ -1,17 +1,14 @@
-from MLX.libmlx import mlx, mlx_t, mlx_image_t, mlx_keyfunc
+from MLX.libmlx import mlx, mlx_t, mlx_keyfunc
 from MLX.libmlx import MLX_KEY_E, MLX_KEY_R, MLX_KEY_SPACE, MLX_KEY_LEFT, MLX_KEY_RIGHT
 from PIL import Image
 from Utils import Drone, Hub, HubType, Connection, Colors
 from typing import List, Tuple, Any
-from Parser import MapParser
-import tomllib
 from typing import Dict
 from .WindowConfig import WindowConfig
-from .Canvas import MlxCanvas
+from MLXCanvas import MlxCanvas
 import random
 import ctypes
 import os
-from datetime import datetime
 
 
 BANNER_PATH = "./Assets/images/banner.png"
@@ -108,9 +105,6 @@ class MlxVisualizer:
                            hubs: Dict[str, Hub]) -> None:
         color = 0xC0C0C0AE
         for con in connections:
-            hub_w = hubs[con.start].gfx.w
-            hub_h = hubs[con.start].gfx.h
-
             sx = hubs[con.start].x
             sy = hubs[con.start].y
 
@@ -165,27 +159,6 @@ class MlxVisualizer:
             drones[drone.id] = drone
         start_hub.droneCount = n_drones
         return drones
-
-    def _reset_drones_position(self, drones: Dict[str, Drone]) -> None:
-        start_hub = [
-            hub for hub in self.simulation.map_data.hubs.values() if hub.type == HubType.start_hub
-            ][0]
-
-        png_w = list(drones.values())[0].mlximg.contents.width
-        png_h = list(drones.values())[0].mlximg.contents.height
-
-        x = start_hub.x - png_w // 2
-        y = start_hub.y - png_h // 2
-
-        for drone in drones.values():
-            if drone.arrived:
-                drone.distination.droneCount -= 1
-            drone.position = (x, y)
-            self.update_drone_position(drone, (5 * random.random(), 5 * random.random()))
-            drone.distination = start_hub
-
-        start_hub.droneCount = len(drones.values())
-
 
     def _render_footer(self, texts: List[str]) -> None:
         x = self.wcfg.padding_x
@@ -273,9 +246,6 @@ class MlxVisualizer:
 
         MlxCanvas._load_png_to_mlximg(self.banner, banner_img, 0, 0,
                                       self.wcfg.banner_color, Colors.white.value)
-
-        # self._add_png_to_window(banner_img, banner_x, banner_y, BANNER_LAYER,
-        #                         self.wcfg.banner_color, Colors.white.value)
 
         # draw line under the padding_y at the top and above them in the bottom
         st_x = self.wcfg.padding_x

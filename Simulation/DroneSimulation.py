@@ -1,8 +1,9 @@
 from MLX.libmlx import mlx_loop_hook_func, mlx_image_t
-from Visualizer import MlxVisualizer, MlxCanvas
+from Visualizer import MlxVisualizer
+from MLXCanvas import MlxCanvas
 import ctypes
 from typing import List, Tuple, Dict
-from Utils import Drone, Hub, HubType
+from Utils import Drone, HubType
 from random import random
 from Parser import MapParser
 
@@ -98,15 +99,14 @@ class DroneSimulation:
 
         start_hub.droneCount = len(drones)
 
-
     def _move_toward(self, drone: Drone,
                       path_layer: mlx_image_t ,
                       show_path: bool = False) -> None:
 
-        if DroneSimulation._has_arrived(drone):
+        if self._has_arrived(drone):
             return
 
-        direction = DroneSimulation._get_vector_direction_to(drone)
+        direction = self._get_vector_direction_to(drone)
         img_w = drone.mlximg.contents.width
         img_h = drone.mlximg.contents.height
 

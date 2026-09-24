@@ -1,7 +1,5 @@
 from pydantic import BaseModel
 import tomllib
-from typing import Tuple
-from Parser import MapParser
 
 class WindowConfig(BaseModel):
     title: str = "Fly-in"
