@@ -36,9 +36,9 @@ class Drone():
     def __init__(self, id: str) -> None:
         self.id = id
         self.position: Tuple[float, float]
-        self.distination: Hub
+        self.dest_pos: Tuple[float, float]
+        self.dest_hub: Hub | None
         self.color: Colors
-        self.arrived: bool = False
         self.mlximg: mlx_image_t
 
 

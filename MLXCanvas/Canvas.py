@@ -83,6 +83,7 @@ class MlxCanvas:
                           Colors.green,  Colors.blue, Colors.indigo,
                           Colors.violet]
         rainbow_idx = 0
+        is_rainbow: bool = False
 
         if isinstance(png, str):
             png = Image.open(png).convert("RGBA")
@@ -90,6 +91,8 @@ class MlxCanvas:
         png_w, png_h = png.size
 
         if isinstance(replacement_color, Colors):
+            if replacement_color == Colors.rainbow:
+                is_rainbow = True
             replacement_color = replacement_color.value
         if isinstance(source_color, Colors):
             source_color = source_color.value
@@ -102,9 +105,9 @@ class MlxCanvas:
             for png_x in range(png_w):
                 color = pack_rgba(*png.getpixel((png_x, png_y)))
 
-                if (replacement_color and source_color and
+                if (replacement_color in Colors and source_color and
                    color == source_color):
-                    if replacement_color == Colors.rainbow:
+                    if is_rainbow:
                         color = rainbow_colors[rainbow_idx].value
                     else:
                         color = replacement_color
