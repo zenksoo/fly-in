@@ -3,6 +3,7 @@ from .Types import ZoneTypes, HubType, Colors
 from typing import Tuple
 from MLX.libmlx import mlx_image_t
 
+
 def pack_rgba(r: int, g: int, b: int, a: int) -> int:
     return (r << 24) | (g << 16) | (b << 8) | a
 
@@ -32,6 +33,7 @@ def HexColor_to_decimal(hex_color: str) -> int:
         raise ValueError(
             "Invalid HexDecimal Value, (e.g #fff #ffffff #ffff #ffffffff)")
 
+
 class Drone():
     def __init__(self, id: str) -> None:
         self.id = id
@@ -40,7 +42,6 @@ class Drone():
         self.dest_hub: Hub | None
         self.color: Colors
         self.mlximg: mlx_image_t
-
 
 
 class HubMetaData(BaseModel):

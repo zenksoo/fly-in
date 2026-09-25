@@ -218,14 +218,6 @@ class mlx_texture_t(ctypes.Structure):
         ("pixels", ctypes.POINTER(c_uint8))
     ]
 
-class mlx_instance_t(ctypes.Structure):
-    _fields_ = [
-        ("x", c_int32),
-        ("y", c_int32),
-        ("z", c_int32),
-        ("enabled", c_bool)
-    ]
-
 class xpm_t(ctypes.Structure):
     _fields_ = [
         ("texture", mlx_texture_t),

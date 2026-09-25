@@ -23,3 +23,5 @@ padding_x      = 64
 padding_y      = 100
 
 
+[[tool.mypy]]
+exclude = ['^MLX/']

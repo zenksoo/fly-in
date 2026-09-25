@@ -7,8 +7,8 @@ from typing import Dict, Tuple
 class MlxCanvas:
     @staticmethod
     def _put_pixel(img: mlx_image_t,
-                    x: int, y: int,
-                    pixel_color: int) -> None:
+                   x: int, y: int,
+                   pixel_color: int) -> None:
         idx = (y * img.contents.width + x) * 4
         img.contents.pixels[idx] = pixel_color >> 24 & 0xFF
         img.contents.pixels[idx + 1] = pixel_color >> 16 & 0xFF
@@ -16,8 +16,9 @@ class MlxCanvas:
         img.contents.pixels[idx + 3] = pixel_color & 0xFF
 
     @staticmethod
-    def _create_layer(mlx_ptr: mlx_t, x: int, y: int,  z: int, width: int | None = None,
-                    height: int | None = None) -> mlx_image_t:
+    def _create_layer(mlx_ptr: mlx_t, x: int, y: int,  z: int,
+                      width: int | None = None,
+                      height: int | None = None) -> mlx_image_t:
         if not width:
             width = mlx_ptr.contents.width
 
@@ -50,7 +51,6 @@ class MlxCanvas:
         img.contents.instances[0].z = z
 
         return img
-
 
     @staticmethod
     def _fill_window_bg(img: mlx_image_t, color: int | Colors,
@@ -155,8 +155,8 @@ class MlxCanvas:
 
                         pixel_color = replacement_color
 
-                    MlxCanvas._put_pixel(img, img_x +  x + layer_x,
-                                       y + layer_y, pixel_color)
+                    MlxCanvas._put_pixel(img, img_x + x + layer_x,
+                                         y + layer_y, pixel_color)
 
         if isinstance(color, Colors):
             color = color.value
@@ -186,15 +186,17 @@ class MlxCanvas:
 
         MlxCanvas._delete_text(layer, label_coord["start"], label_coord["end"])
         MlxCanvas._draw_text(layer, new_content, label_coord["start"][0],
-                          label_coord["start"][1])
+                             label_coord["start"][1])
 
     @staticmethod
-    def _draw_circle(layer: mlx_image_t, cx: int, cy: int, r: int, pixel_color: int) -> None:
+    def _draw_circle(layer: mlx_image_t,
+                     cx: int, cy: int, r: int,
+                     pixel_color: int) -> None:
         x = 0
         y = -r
 
         if not r:
-            MlxCanvas._put_pixel(layer,cx, cy, pixel_color)
+            MlxCanvas._put_pixel(layer, cx, cy, pixel_color)
             return
 
         while (x < -y):
@@ -213,7 +215,6 @@ class MlxCanvas:
             MlxCanvas._put_pixel(layer, cx - y, cy - x, pixel_color)
             MlxCanvas._put_pixel(layer, cx - y, cy + x, pixel_color)
             MlxCanvas._put_pixel(layer, cx + y, cy - x, pixel_color)
-
 
             for i in range(cx - x, cx + x + 1):
                 MlxCanvas._put_pixel(layer, i, cy + y, pixel_color)
@@ -235,7 +236,8 @@ class MlxCanvas:
 
         step = max(abs(sx), abs(sy))
 
-        if not step: return
+        if not step:
+            return
 
         dx = sx / step
         dy = sy / step
@@ -252,6 +254,7 @@ class MlxCanvas:
             x = round(x0 + (vx * i))
             y = round(y0 + (vy * i))
             for i in range(step):
-                MlxCanvas._draw_circle(layer, round(x), round(y), r, pixel_color)
+                MlxCanvas._draw_circle(layer, round(x), round(y),
+                                       r, pixel_color)
                 x += dx
                 y += dy

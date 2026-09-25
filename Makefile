@@ -17,7 +17,7 @@ clean:
 
 lint:
 	@uv run flake8 --exclude=.venv,MLX .
-	@uv run mypy --exclude=MLX/libmlx.pyi . --warn-return-any \
+	@uv run mypy  . --exclude "MLX" --warn-return-any \
 	--warn-unused-ignores --ignore-missing-imports \
 	--disallow-untyped-defs --check-untyped-defs
 

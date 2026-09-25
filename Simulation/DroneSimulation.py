@@ -7,9 +7,11 @@ from random import random
 from Parser import MapParser
 import time
 
+
 class DroneSimulation:
     max_speed = 4.0
     min_spped = 0.5
+
     def __init__(self, map_data: MapParser | str) -> None:
         if isinstance(map_data, str):
             map_data = MapParser.from_file(map_data)
@@ -20,7 +22,6 @@ class DroneSimulation:
         self.solution: List[List[str]]
         self.routes: List[str] = []
         self.turn: int = 0
-
 
         self.SPEED: float = 1.0
         self.RESET: bool = False
@@ -39,7 +40,7 @@ class DroneSimulation:
             route = st.split("-")
             drone = self.drones[route[0]]
             curr_pos = drone.position
-            new_pos = ()
+            new_pos: Tuple[int, int] = (0, 0)
             new_hub = None
             if (len(route) == 3):
                 start_hub = self.map_data.hubs[route[1]]
@@ -59,7 +60,6 @@ class DroneSimulation:
                 drone.dest_hub = new_hub
 
                 moved_drones.append(drone)
-
 
         self.READY_TO_MOVE_DRONES = moved_drones
 
@@ -81,7 +81,7 @@ class DroneSimulation:
         x, y = (drone.position[0], drone.position[1])
 
         if ((x >= drone.dest_pos[0] - 5 and x <= drone.dest_pos[0] + 5) and
-            (y >= drone.dest_pos[1] - 5 and y <= drone.dest_pos[1] + 5)):
+           (y >= drone.dest_pos[1] - 5 and y <= drone.dest_pos[1] + 5)):
             return True
         return False
 
@@ -102,33 +102,34 @@ class DroneSimulation:
 
         for drone in drones:
             drone.position = (x, y)
-            MlxVisualizer.update_drone_position(drone,
-                                                (round(5 * random()), round(5 * random())))
+            MlxVisualizer.update_drone_position(
+                drone,
+                (round(5 * random()), round(5 * random())))
             drone.dest_pos = (start_hub.x, start_hub.y)
             drone.dest_hub = start_hub
 
     def _move_toward(self, drone: Drone,
-                      path_layer: mlx_image_t ,
-                      show_path: bool = False) -> None:
+                     path_layer: mlx_image_t,
+                     show_path: bool = False) -> None:
         from Visualizer import MlxVisualizer
 
         if self._drone_arrived(drone):
             return
 
-        direction = self._get_vector_direction_to(drone)
+        dir = self._get_vector_direction_to(drone)
         img_w = drone.mlximg.contents.width
         img_h = drone.mlximg.contents.height
 
-        new_pos_x = drone.position[0] + direction[0] * self.SPEED * (random() * 4)
-        new_pos_y = drone.position[1] + direction[1] * self.SPEED * (random() * 4)
+        new_pos_x = drone.position[0] + dir[0] * self.SPEED * (random() * 4)
+        new_pos_y = drone.position[1] + dir[1] * self.SPEED * (random() * 4)
 
         if show_path:
             MlxCanvas._draw_line(path_layer,
-                                round(drone.position[0]),
-                                round(drone.position[1]),
-                                round(new_pos_x),
-                                round(new_pos_y),
-                                0, drone.color.value)
+                                 round(drone.position[0]),
+                                 round(drone.position[1]),
+                                 round(new_pos_x),
+                                 round(new_pos_y),
+                                 0, drone.color.value)
 
         drone.position = (new_pos_x, new_pos_y)
 
@@ -148,15 +149,21 @@ class DroneSimulation:
             simulation.turn = 0
             visualizer._update_hub_capacity_label()
             simulation._update_moved_drones()
-            MlxCanvas._update_text(visualizer.text_layer, visualizer.turns_label, "TURN: 00")
-            visualizer.drones_layer = MlxCanvas._clear_image(visualizer.mlx_ptr, visualizer.drones_layer)
+            MlxCanvas._update_text(visualizer.text_layer,
+                                   visualizer.turns_label, "TURN: 00")
+            visualizer.drones_layer = MlxCanvas._clear_image(
+                visualizer.mlx_ptr,
+                visualizer.drones_layer)
 
-        if not simulation.RUN_ANIMATION or simulation.TURNS_FINISHED : return
+        if not simulation.RUN_ANIMATION or simulation.TURNS_FINISHED:
+            return
 
         for drone in simulation.READY_TO_MOVE_DRONES:
-            simulation._move_toward(drone, visualizer.drones_layer, visualizer.wcfg.enable_drones_path)
+            simulation._move_toward(drone, visualizer.drones_layer,
+                                    visualizer.wcfg.enable_drones_path)
 
-        if all([simulation._drone_arrived(d) for d in simulation.READY_TO_MOVE_DRONES]):
+        if all([simulation._drone_arrived(d)
+                for d in simulation.READY_TO_MOVE_DRONES]):
             visualizer._update_hub_capacity_label()
             simulation.turn += 1
             if simulation.turn < len(simulation.solution):
@@ -165,10 +172,8 @@ class DroneSimulation:
                 new_content = f"TURN: {simulation.turn}"
             else:
                 new_content = f"TURN: 0{simulation.turn}"
-            MlxCanvas._update_text(visualizer.text_layer, visualizer.turns_label, new_content)
+            MlxCanvas._update_text(visualizer.text_layer,
+                                   visualizer.turns_label, new_content)
             time.sleep(0.4)
         if simulation.turn >= len(simulation.solution):
             simulation.TURNS_FINISHED = True
-
-
-
