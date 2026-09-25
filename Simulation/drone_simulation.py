@@ -141,7 +141,7 @@ class DroneSimulation:
     def movement_animation(param: int) -> None:
         from Visualizer import MlxVisualizer
         visualizer: MlxVisualizer = ctypes.cast(param, ctypes.py_object).value
-        simulation = visualizer.simulation
+        simulation: DroneSimulation = visualizer.simulation
 
         if simulation.RESET:
             simulation.RESET = False
@@ -164,7 +164,6 @@ class DroneSimulation:
 
         if all([simulation._drone_arrived(d)
                 for d in simulation.READY_TO_MOVE_DRONES]):
-            visualizer._update_hub_capacity_label()
             simulation.turn += 1
             if simulation.turn < len(simulation.solution):
                 simulation._update_moved_drones()
@@ -174,6 +173,7 @@ class DroneSimulation:
                 new_content = f"TURN: 0{simulation.turn}"
             MlxCanvas._update_text(visualizer.text_layer,
                                    visualizer.turns_label, new_content)
-            time.sleep(0.4)
+            visualizer._update_hub_capacity_label()
+            time.sleep(0.3)
         if simulation.turn >= len(simulation.solution):
             simulation.TURNS_FINISHED = True

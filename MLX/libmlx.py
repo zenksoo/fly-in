@@ -10,6 +10,7 @@
 # prototypes for interacting with MLX42.
 # ============================================================================
 
+
 import ctypes
 from os import path
 from logging import critical
@@ -17,14 +18,17 @@ from platform import system
 
 # ============================================================================
 
+lib_name: str = ""
+
+
 try: # Load FFI Library
     lib = 'libmlx42'
-    system = system()
-    if system == "Linux":
+    target_sys = system()
+    if target_sys == "Linux":
         lib_name = f"{lib}.so"
-    elif system == "Darwin":
+    elif target_sys == "Darwin":
         lib_name = f"{lib}.dylib"
-    elif system == "Windows":
+    elif target_sys == "Windows":
         lib_name = f"{lib}.dll"
     else:
         raise RuntimeError("Unsupported operating system")
@@ -234,6 +238,14 @@ class mlx_key_data_t(ctypes.Structure):
         ("modifier", c_int32) # ENUM
     ]
 
+class mlx_instance_t(ctypes.Structure):
+    _fields_ = [
+        ("x", c_int32),
+        ("y", c_int32),
+        ("z", c_int32),
+        ("enabled", c_bool)
+    ]
+
 class mlx_image_t(ctypes.Structure):
     _fields_ = [
         ("width", c_uint32),
@@ -243,14 +255,6 @@ class mlx_image_t(ctypes.Structure):
         ("count", c_size_t),
         ("enabled", c_bool),
         ("context", c_void_p)
-    ]
-
-class mlx_instance_t(ctypes.Structure):
-    _fields_ = [
-        ("x", c_int32),
-        ("y", c_int32),
-        ("z", c_int32),
-        ("enabled", c_bool)
     ]
 
 class mlx_t(ctypes.Structure):

@@ -76,8 +76,8 @@ class MlxCanvas:
     @staticmethod
     def _load_png_to_mlximg(layer: mlx_image_t,
                             png: str | Image.Image, x: int, y: int,
-                            replacement_color: Colors | int | None = None,
-                            source_color: Colors | int | None = None) -> None:
+                            replacement_color: Colors | int = 0,
+                            source_color: Colors | int = 0) -> None:
 
         rainbow_colors = [Colors.red, Colors.orange, Colors.yellow,
                           Colors.green,  Colors.blue, Colors.indigo,
@@ -103,7 +103,8 @@ class MlxCanvas:
                 if rainbow_idx >= len(rainbow_colors):
                     rainbow_idx = 0
             for png_x in range(png_w):
-                color = pack_rgba(*png.getpixel((png_x, png_y)))
+                color: int = pack_rgba(
+                    *png.getpixel((png_x, png_y)))  # type: ignore
 
                 if (replacement_color in Colors and source_color and
                    color == source_color):
@@ -149,7 +150,8 @@ class MlxCanvas:
 
             for y in range(8):
                 for x in range(6):
-                    pixel_color = pack_rgba(*png.getpixel((glyph_x + x, y)))
+                    pixel_color = pack_rgba(
+                        *png.getpixel((glyph_x + x, y)))  # type: ignore
                     if (replacement_color and
                        pixel_color == (0xffffff << 8) + 0xff):
 
@@ -251,8 +253,8 @@ class MlxCanvas:
             r = 0
 
         for i in range(-half, half + 1):
-            x = round(x0 + (vx * i))
-            y = round(y0 + (vy * i))
+            x = x0 + (vx * i)
+            y = y0 + (vy * i)
             for i in range(step):
                 MlxCanvas._draw_circle(layer, round(x), round(y),
                                        r, pixel_color)

@@ -1,4 +1,4 @@
-from MLX.libmlx import mlx, mlx_t, mlx_keyfunc
+from MLX.libmlx import mlx, mlx_t, mlx_keyfunc, mlx_key_data_t
 from MLX.libmlx import (MLX_KEY_E, MLX_KEY_R, MLX_KEY_SPACE,
                         MLX_KEY_LEFT, MLX_KEY_RIGHT)
 from PIL import Image
@@ -26,7 +26,7 @@ BANNER_LAYER = 5
 class MlxVisualizer:
     def __init__(self, config_file: str, simulation: DroneSimulation) -> None:
         self.mlx_ptr: mlx_t
-        self.simulation = simulation
+        self.simulation: DroneSimulation = simulation
         self.wcfg: WindowConfig = WindowConfig._from_file(config_file)
 
     @staticmethod
@@ -344,7 +344,7 @@ class MlxVisualizer:
 
     @mlx_keyfunc
     @staticmethod
-    def handel_input(key, param: int) -> None:
+    def handel_input(key: mlx_key_data_t, param: int) -> None:
         # 1 -> key pressed
         # 0 -> key up
         # 2 -> key down = hover
