@@ -10,11 +10,13 @@ import time
 
 class DroneSimulation:
     max_speed = 4.0
-    min_spped = 0.5
+    min_spped = 1.0
 
     def __init__(self, map_data: MapParser | str) -> None:
         if isinstance(map_data, str):
             map_data = MapParser.from_file(map_data)
+
+        self.bigest_dest: int = 0
 
         self.map_data = map_data
         self.drones: Dict[str, Drone] = {}
@@ -23,13 +25,22 @@ class DroneSimulation:
         self.routes: List[str] = []
         self.turn: int = 0
 
-        self.SPEED: float = 1.0
+        self.SPEED: float = 2.0
         self.RESET: bool = False
 
         self.READY_TO_MOVE_DRONES: List[Drone] = []
         self.TURNS_FINISHED: bool = False
 
         self.RUN_ANIMATION: bool = False
+
+    def _calculate_bigest_dest(self) -> None:
+        self.bigest_dest = 0
+        for drone in self.READY_TO_MOVE_DRONES:
+            sx = drone.dest_pos[0] - drone.position[0]
+            sy = drone.dest_pos[1] - drone.position[1]
+
+            if (max(abs(sx), abs(sy)) > self.bigest_dest):
+                self.bigest_dest = int(max(abs(sx), abs(sy)))
 
     def _update_moved_drones(self) -> None:
         moved_drones: List[Drone] = []
@@ -62,14 +73,16 @@ class DroneSimulation:
                 moved_drones.append(drone)
 
         self.READY_TO_MOVE_DRONES = moved_drones
+        self._calculate_bigest_dest()
 
     @staticmethod
-    def _get_vector_direction_to(drone: Drone) -> Tuple[float, float]:
+    def _get_vector_direction_to(drone: Drone,
+                                 step: int) -> Tuple[float, float]:
 
         sx = drone.dest_pos[0] - drone.position[0]
         sy = drone.dest_pos[1] - drone.position[1]
 
-        step = max(abs(sx), abs(sy))
+        # step = max(abs(sx), abs(sy))
 
         dx = sx / step
         dy = sy / step
@@ -116,7 +129,7 @@ class DroneSimulation:
         if self._drone_arrived(drone):
             return
 
-        dir = self._get_vector_direction_to(drone)
+        dir = self._get_vector_direction_to(drone, self.bigest_dest)
         img_w = drone.mlximg.contents.width
         img_h = drone.mlximg.contents.height
 

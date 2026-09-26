@@ -315,7 +315,7 @@ class MlxVisualizer:
         start_label_x += 120
 
         self.speed_status = self.add_labeled_box(start_label_x, start_label_y,
-                                                 "SPEED: 1.0")
+                                                 "SPEED: 2.0")
 
         # add width label at to
         start_label_x += 150
