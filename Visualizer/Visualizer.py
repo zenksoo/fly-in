@@ -332,7 +332,7 @@ class MlxVisualizer:
                                 self.simulation.map_data.hubs)
 
         self._render_footer([
-            "[SPACE] RUN / PAUSE",
+            "[SPACE] RUN | PAUSE",
             "[R] RESET",
             "[>] SPEED +",
             "[<] SPEED -"
