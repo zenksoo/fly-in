@@ -1,17 +1,17 @@
-from Utils import Connection, Drone, Hub, HubType
+from Utils import Connection, Drone, Hub, HubType, ZoneTypes
 from typing import List, Dict
 from enum import Enum
 
 class VertexType(str, Enum):
-    START = "start_hub"
-    NORAML = "hub"
-    END = "end_hub"
+    START = "start"
+    NORAML = "normal"
+    END = "end"
 
 
 class Vertex:
-    def __init__(self, name: str, type: VertexType) -> None:
+    def __init__(self, name: str) -> None:
         self.name: str = name
-        self.type: VertexType = type
+        self.type: VertexType
         self.visited: bool = False
 
 class PathFinding:
@@ -22,37 +22,48 @@ class PathFinding:
 
         pass
 
+    @staticmethod
+    def _create_grap h() -> None:
+        pass
+
 
     @staticmethod
     def _astart_algorithm(connections: List[Connection], hubs: Dict[str, Hub]) -> List[List[str]]:
         solution: List[List[str]] = []
 
-        def _get_hub_neighbors(hubs: Dict[str, Hub], connections: List[Connection]) -> Dict[str, List[Vertex]]:
+        def _get_hub_neighbors(hubs: Dict[str, Hub],
+                               connections: List[Connection]
+                               ) -> Dict[str, List[Vertex]]:
             # it return dictionry of hub name and his neighbors hubs in list
             result: Dict[str, List[Vertex]] = {}
+
+            def _set_vertext_type(vertex: Vertex, hub_type: HubType) -> None:
+                if hub_type == HubType.start_hub:
+                    vertex.type = VertexType.START
+                elif hub_type == HubType.hub:
+                    vertex.type = VertexType.NORAML
+                elif hub_type == HubType.end_hub:
+                    vertex.type = VertexType.END
 
             for con in connections:
                 start_hub = con.start
                 end_hub = con.end
 
-                start_vertex_type = VertexType(hubs[start_hub].type)
-                end_vertext_type = VertexType(hubs[end_hub].type)
-                print(start_vertex_type, end_vertext_type)
-
-
                 if start_hub in result.keys():
-                    if (end_hub not in result[start_hub]):
-                        result[start_hub].append(Vertex(hubs[end_hub].name, end_vertext_type))
+                    result[start_hub].append(Vertex(end_hub))
                 else:
-                    if (hubs[start_hub].type != HubType.end_hub):
-                        result[start_hub] = [Vertex(hubs[end_hub].name, end_vertext_type)]
+                    result[start_hub] = [Vertex(end_hub)]
+
+                _set_vertext_type(result[start_hub][-1], hubs[end_hub].type)
 
                 if end_hub in result.keys():
-                    if (start_hub not in result[end_hub]):
-                        result[end_hub].append(Vertex(hubs[start_hub].name, start_vertex_type))
+                    result[end_hub].append(Vertex(start_hub))
                 else:
-                    if (hubs[end_hub].type != HubType.end_hub):
-                        result[end_hub] = [Vertex(hubs[start_hub].name, start_vertex_type)]
+                    result[end_hub] = [Vertex(start_hub)]
+
+                _set_vertext_type(result[end_hub][-1], hubs[start_hub].type)
+                print(hubs[start_hub].metadata.zone)
+
             return result
 
 
@@ -62,7 +73,9 @@ class PathFinding:
         hubs_neighbors = _get_hub_neighbors(hubs, connections)
 
         for key in hubs_neighbors.keys():
-            print(key, [h.type for h in hubs_neighbors[key]])
+            print(key)
+            for vertex in hubs_neighbors[key]:
+                print("     >> ", vertex.name, vertex.type)
 
 
         return solution
