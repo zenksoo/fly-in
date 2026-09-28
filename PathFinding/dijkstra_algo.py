@@ -23,7 +23,7 @@ class PathFinding:
         pass
 
     @staticmethod
-    def _create_grap h() -> None:
+    def _create_graph() -> None:
         pass
 
 
