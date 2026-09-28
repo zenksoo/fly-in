@@ -45,11 +45,10 @@ class FlyIn:
              "D11-start", "D12-start"],
 
             ["D1-gate", "D2-gate", "D3-gate", "D4-gate", "D5-gate",
-             "D6-gate"],
-
-            ["D1-gate-A3", "D2-gate-A2", "D3-gate-A1", "D4-gate-A1",
-             "D7-start-gate", "D8-start-gate", "D9-start-gate",
+             "D6-gate", "D7-start-gate", "D8-start-gate", "D9-start-gate",
              "D10-start-gate"],
+
+            ["D1-gate-A3", "D2-gate-A2", "D3-gate-A1", "D4-gate-A1"],
 
             ["D1-A3", "D2-A2", "D3-A1", "D4-A1", "D7-gate", "D8-gate",
              "D9-gate", "D10-gate", "D11-start-gate", "D12-start-gate"],

@@ -9,7 +9,7 @@ import time
 
 
 class DroneSimulation:
-    max_speed = 4.0
+    max_speed = 6.0
     min_spped = 1.0
 
     def __init__(self, map_data: MapParser | str) -> None:
@@ -178,6 +178,7 @@ class DroneSimulation:
         if all([simulation._drone_arrived(d)
                 for d in simulation.READY_TO_MOVE_DRONES]):
             simulation.turn += 1
+            visualizer._update_hub_capacity_label()
             if simulation.turn < len(simulation.solution):
                 simulation._update_moved_drones()
             if (simulation.turn > 9):
@@ -186,7 +187,6 @@ class DroneSimulation:
                 new_content = f"TURN: 0{simulation.turn}"
             MlxCanvas._update_text(visualizer.text_layer,
                                    visualizer.turns_label, new_content)
-            visualizer._update_hub_capacity_label()
             time.sleep(0.3)
         if simulation.turn >= len(simulation.solution):
             simulation.TURNS_FINISHED = True

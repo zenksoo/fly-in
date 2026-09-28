@@ -1,6 +1,7 @@
 from Utils import Connection, Drone, Hub, HubType, ZoneTypes
 from typing import List, Dict
 from enum import Enum
+from abc import ABC
 
 class VertexType(str, Enum):
     START = "start"
@@ -14,17 +15,61 @@ class Vertex:
         self.type: VertexType
         self.visited: bool = False
 
+
+class GraphTheory(ABC):
+    @staticmethod
+    def _create_vertex_from_hubs(data: Dict[str, Hub]) -> List[Vertex]:
+        def _set_vertext_type(vertex: Vertex, hub_type: HubType) -> None:
+            if hub_type == HubType.start_hub:
+                vertex.type = VertexType.START
+            elif hub_type == HubType.hub:
+                vertex.type = VertexType.NORAML
+            elif hub_type == HubType.end_hub:
+                vertex.type = VertexType.END
+
+        vertex_lst: List[Vertex] = []
+        for hub in data.values():
+            vertex = Vertex(hub.name)
+            _set_vertext_type(vertex, hub.type)
+
+            vertex_lst.append(vertex)
+
+        return vertex_lst
+
+
+    @staticmethod
+    def _generate_vertex_edges_from_connections(
+        data: List[Vertex],
+        connections: List[Connection]) -> Dict[Vertex, List[Vertex]]:
+
+        edges_lst: Dict[Vertex, List[Vertex]] = {}
+
+        # init empty edges
+        for vertex in data:
+            edges_lst[vertex] = []
+
+        for vertex in data:
+
+            print(vertex.name)
+
+        return edges_lst
+
+
 class PathFinding:
     # def __new__(cls) -> Self:
     #     raise RuntimeError("u can't create object from this class")
 
+
     def __init__(self) -> None:
 
         pass
-
     @staticmethod
-    def _create_graph() -> None:
-        pass
+    def _create_graph(data, connections: List[Connection]) -> List[List[int]]:
+        graph: List[List[int]] = []
+
+
+
+        return graph
 
 
     @staticmethod
@@ -76,6 +121,16 @@ class PathFinding:
             print(key)
             for vertex in hubs_neighbors[key]:
                 print("     >> ", vertex.name, vertex.type)
+
+        data = GraphTheory._create_vertex_from_hubs(hubs)
+
+        edges = GraphTheory._generate_vertex_edges_from_connections(data, connections)
+
+
+
+        for d in data:
+            print(d.name, d.type)
+
 
 
         return solution
