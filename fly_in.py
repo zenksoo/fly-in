@@ -37,7 +37,7 @@ class FlyIn:
         cls.visualizer.init_window()
         cls.visualizer.init_map()
 
-        cls.simulation.solution = PathFinding._astart_algorithm(cls.map_data.connections, cls.map_data.hubs)
+        cls.simulation.solution = PathFinding._core(cls.map_data.connections, cls.map_data.hubs)
         cls.simulation.solution = [
             ["D1-start-gate", "D2-start-gate", "D3-start-gate",
              "D4-start-gate", "D5-start-gate", "D6-start-gate",
