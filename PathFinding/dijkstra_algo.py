@@ -42,18 +42,61 @@ class GraphTheory(ABC):
         data: List[Vertex],
         connections: List[Connection]) -> Dict[Vertex, List[Vertex]]:
 
-        edges_lst: Dict[Vertex, List[Vertex]] = {}
+        def _get_vertex_by_name(vertexs: List[Vertex], vertex_name: str) -> Vertex | None:
+            for vertex in vertexs:
+                if vertex.name == vertex_name:
+                    return vertex
 
+            return None
+
+        edges_lst: Dict[Vertex, List[Vertex]] = {}
         # init empty edges
         for vertex in data:
             edges_lst[vertex] = []
 
-        for vertex in data:
+        for con in connections:
+            start = _get_vertex_by_name(data, con.start)
+            end = _get_vertex_by_name(data, con.end)
 
-            print(vertex.name)
+            if start and end:
+                if start in edges_lst:
+                    edges_lst[start].append(end)
+                else:
+                    edges_lst[start] = [end]
+
+                if end in edges_lst:
+                    edges_lst[end].append(start)
+                else:
+                    edges_lst[end] = [start]
+
 
         return edges_lst
+    @staticmethod
+    def _create_graph(vertexs: List[Vertex], edges: Dict[Vertex, List[Vertex]]) -> List[List[int]]:
+        def _init_empty_graph(vertexs: List[Vertex]) -> List[List[int]]:
+            graph: List[List[int]] = []
+            for column in range(len(vertexs)):
+                graph.append([])
+                for row in range(len(vertexs)):
+                    graph[column].append(0)
 
+
+            return graph
+
+
+
+        def _get_vertex_idx(vertexs: List[Vertex], target_vertex: Vertex) -> int:
+            for i in range(len(vertexs)):
+                if (vertexs[i] == target_vertex):
+                    return i
+            return -1
+
+        graph: List[List[int]] = _init_empty_graph(vertexs)
+
+
+
+
+        return graph
 
 class PathFinding:
     # def __new__(cls) -> Self:
@@ -63,13 +106,7 @@ class PathFinding:
     def __init__(self) -> None:
 
         pass
-    @staticmethod
-    def _create_graph(data, connections: List[Connection]) -> List[List[int]]:
-        graph: List[List[int]] = []
 
-
-
-        return graph
 
 
     @staticmethod
@@ -107,7 +144,6 @@ class PathFinding:
                     result[end_hub] = [Vertex(start_hub)]
 
                 _set_vertext_type(result[end_hub][-1], hubs[start_hub].type)
-                print(hubs[start_hub].metadata.zone)
 
             return result
 
@@ -117,19 +153,32 @@ class PathFinding:
 
         hubs_neighbors = _get_hub_neighbors(hubs, connections)
 
-        for key in hubs_neighbors.keys():
-            print(key)
-            for vertex in hubs_neighbors[key]:
-                print("     >> ", vertex.name, vertex.type)
+        # for key in hubs_neighbors.keys():
+        #     print(key)
+        #     for vertex in hubs_neighbors[key]:
+        #         print("     >> ", vertex.name, vertex.type)
 
         data = GraphTheory._create_vertex_from_hubs(hubs)
 
         edges = GraphTheory._generate_vertex_edges_from_connections(data, connections)
 
+        graph = GraphTheory._create_graph(data, edges)
+
+        for y in graph:
+            for x in y:
+                print(f" {x} ", end="")
+            print("")
 
 
-        for d in data:
-            print(d.name, d.type)
+        # for e in edges.keys():
+        #     print(e.name, e.type)
+        #     for ne in edges[e]:
+        #         print("     ", ne.name, ne.type)
+
+
+
+        # for d in data:
+        #     print(d.name, d.type)
 
 
 
