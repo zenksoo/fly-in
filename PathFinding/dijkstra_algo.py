@@ -13,24 +13,30 @@ class Vertex:
     def __init__(self, name: str) -> None:
         self.name: str = name
         self.type: VertexType
+        self.zone: ZoneTypes
         self.visited: bool = False
 
 
 class GraphTheory(ABC):
     @staticmethod
     def _create_vertex_from_hubs(data: Dict[str, Hub]) -> List[Vertex]:
-        def _set_vertext_type(vertex: Vertex, hub_type: HubType) -> None:
-            if hub_type == HubType.start_hub:
+        def _set_vertext_type_and_zone(vertex: Vertex,
+                                       hub_type: Hub
+                                       ) -> None:
+
+            vertex.zone = hub.metadata.zone
+
+            if hub.type == HubType.start_hub:
                 vertex.type = VertexType.START
-            elif hub_type == HubType.hub:
+            elif hub.type == HubType.hub:
                 vertex.type = VertexType.NORAML
-            elif hub_type == HubType.end_hub:
+            elif hub.type == HubType.end_hub:
                 vertex.type = VertexType.END
 
         vertex_lst: List[Vertex] = []
         for hub in data.values():
             vertex = Vertex(hub.name)
-            _set_vertext_type(vertex, hub.type)
+            _set_vertext_type_and_zone(vertex, hub)
 
             vertex_lst.append(vertex)
 
@@ -78,13 +84,13 @@ class PathFinding(ABC):
 
         solution: List[List[str]] = []
 
-        data = GraphTheory._create_vertex_from_hubs(hubs)
+        vertexs = GraphTheory._create_vertex_from_hubs(hubs)
 
-        graph = GraphTheory._create_adjacency_list_graph(data, connections)
+        graph = GraphTheory._create_adjacency_list_graph(vertexs, connections)
 
         for e in graph.keys():
             print(e.name, e.type)
             for ne in graph[e]:
-                print("     ", ne.name, ne.type)
+                print("     ", ne.name, ne.type, ne.zone)
 
         return solution
