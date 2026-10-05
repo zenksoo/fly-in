@@ -37,41 +37,6 @@ class MapParser:
         return file
 
     @staticmethod
-    def _extra_check(hubs: Dict[str, Hub]) -> None:
-        pass
-
-    @staticmethod
-    def _metadata_pattern(pattern: re.Pattern, match: re.Match) -> None:
-        match_source = re.sub(pattern, "", match.string).strip()
-        match_source = re.sub(r'\s+', " ", match_source)
-        metadata_content = re.findall(r"(\w+=\w+)", match_source)
-        metadata_pattern = re.compile(
-            r"(?P<open>\[)?"
-            f"{" ".join(metadata_content)}"
-            r"(?P<close>\])?")
-
-        match = metadata_pattern.match(match_source)  # type: ignore
-
-        if match and metadata_content:
-            if not match.group("open") and not match.group("close"):
-                raise MapParserError(
-                    "missing brackets '[]' around metadata block\n\
-                    \n\tmetadata block must be wrapped in brackets:\
-                    [propertie=value]")
-            elif not match.group("open"):
-                raise MapParserError(
-                    "missing opening bracket '[' in metadata block\n\
-                    \n\tmetadata block must be wrapped in brackets:\
-                    [propertie=value]"
-                )
-            else:
-                raise MapParserError(
-                    "missing closing bracket ']' in metadata block\n\
-                    \n\tmetadata block must be wrapped in brackets:\
-                    [propertie=value]"
-                )
-
-    @staticmethod
     def _metadata_parser(metadata_for: str, data: str
                          ) -> HubMetaData | ConnectionMetadata | None:
         if not data:
@@ -80,34 +45,38 @@ class MapParser:
             elif metadata_for == "connection":
                 return ConnectionMetadata()
 
-        registred_metadata = ['color', 'max_drones',
-                              'zone', "max_link_capacity"]
+        data = re.sub(r"\s+", ' ', data)
+
+        registred_metadata_for_hub = ['color', 'max_drones',
+                                      'zone']
+        registred_metadata_for_connection = ['max_link_capacity']
         metadata_dict: Dict[str, Any] = {}
 
-        data = data[2: len(data) - 1]
-        match = re.findall(r"(\w+)=(-?\w+)\s*", data)
-
-        unexpected_text = re.sub(r"(\w+)=(-?\w+)", '', data).strip()
-
-        if unexpected_text:
-            raise MapParserError(
-                f"invalid properties syntax\
-                `'{"' '".join(unexpected_text.split(" "))}'`\
-                in meatadata\n\
-                \n\tProperties must follow 'key=value' format: [color=green]"
-            )
-
-        for key, val in match:
-            if key not in registred_metadata:
+        for property in data.split(" "):
+            if ("=" not in property or (len(property.split("=")) > 2) or
+               len(property.split("=")[1]) == 0):
+                raise MapParserError(
+                    f"invalid properties syntax '{property}'\
+                    in meatadata\n\n\tProperties must follow \
+                    'key=value' format: [color=green]"
+                )
+            key, val = property.split("=")
+            if ((metadata_for == "hub"
+               and key not in registred_metadata_for_hub) or
+               metadata_for == "connection"
+               and key not in registred_metadata_for_connection):
                 raise MetaDataParserError(
                     f"unknown metadata property '{key}'\n")
             if key == "zone":
                 try:
                     metadata_dict[key] = ZoneTypes[val]
                 except KeyError:
-                    raise MapParserError("invalide zone type")
+                    raise MapParserError(f"invalide zone type '{val}'")
             elif key == "color":
-                metadata_dict[key] = Colors[val]
+                try:
+                    metadata_dict[key] = Colors[val]
+                except KeyError:
+                    raise MapParserError(f"unregistred color '{val}'")
             else:
                 metadata_dict[key] = int(val)
 
@@ -126,7 +95,7 @@ class MapParser:
             positive integer (e.g. nb_drones: 4).")
 
         n = int(nd_match.group("num"))
-        if n < 0:
+        if n <= 0:
             raise MapParserError(f"invalid value '{n}' for 'nb_drones'\n\
             \n\t'nb_drones' must be a positive integer greater than zero.")
         return (n)
@@ -139,32 +108,23 @@ class MapParser:
         hub["x"] = int(hub["x"])
         hub["y"] = int(hub["y"])
 
-        if not hub["metadata"]:
-            MapParser._metadata_pattern(hub_pattern, hub_match)
         try:
-            try:
-                hub["metadata"] = MapParser._metadata_parser(
-                    "hub", hub["metadata"])
-            except ValidationError:
-                raise MapParserError(
-                    "invalid value\
-                    in Metadata for 'max_drones'\n\n\t'max_drones'\
-                    must be a positive integer greater than zero.")
-            except ValueError:
-                raise MapParserError(
-                    "invalid value in Metadata for 'max_drones'\n\
-                    \n\t'max_drones' must be a valid positive integer")
+            hub["metadata"] = MapParser._metadata_parser(
+                "hub", hub["metadata"])
+        except ValidationError:
+            raise MapParserError(
+                "invalid value\
+                in Metadata for 'max_drones'\n\n\t'max_drones'\
+                must be a positive integer greater than zero.")
+        except ValueError:
+            raise MapParserError(
+                "invalid value in Metadata for 'max_drones'\n\
+                \n\t'max_drones' must be a valid positive integer")
+
         except MetaDataParserError as e:
             raise MapParserError(
                 f"{e.msg}\n\
                 \n\tValid metadata for 'hub': 'color', 'max_drones', 'zone'")
-
-        unexpected_text = re.sub(hub_pattern, '', hub_match.string)
-        unexpected_text = re.sub(r"(?:\s+\[.*\])", '', unexpected_text)
-        if unexpected_text:
-            raise MapParserError(
-                "Invalid Line, Additionall Items\n\
-                \n\t'hubs' expects exactly: hub: <name> <x> <y> <[metadata]>")
         return Hub(**hub)
 
     @staticmethod
@@ -172,9 +132,6 @@ class MapParser:
                              ) -> Connection:
 
         connection: Dict[str, Any] = c_match.groupdict()
-
-        if not connection["metadata"]:
-            MapParser._metadata_pattern(c_pattern, c_match)
         try:
             try:
                 connection["metadata"] = MapParser._metadata_parser(
@@ -193,17 +150,6 @@ class MapParser:
                 f"{e.msg}\n\
                 \n\tvalid metadata for 'connection': 'max_link_capacity'"
             )
-
-        unexpected_text = re.sub(c_pattern, '', c_match.string)
-        unexpected_text = re.sub(r"(?:\s+\[.*\])", '', unexpected_text)
-
-        if unexpected_text:
-            raise MapParserError(
-                "Invalid Line, Additionall Items\n\
-                \n\t'hubs' expects exactly: hub: <name> <x> <y> <[metadata]>")
-        del connection["sep"]
-        del connection["m_content"]
-
         return Connection(**connection)
 
     @classmethod
@@ -235,21 +181,13 @@ class MapParser:
                 r"\s*$"
             )
 
-            match = hub_pattern.match(line)
-            if match:
-                print("maching pattern")
-                print(match["type"])
-                print(match["name"])
-                print(match["x"], match["y"])
-                print(match["metadata"])
-
-            continue
             connection_pattern = re.compile(
                 r"^connection\s*:\s+"
-                r"(?P<start>[^\s]+)"
-                r"(?P<sep>-)"
-                r"(?P<end>\w+)"
-                r'(?P<metadata>\s+\[(?P<m_content>.*)\])?'
+                r"(?P<start>[^\s-]+)"
+                r"-"
+                r"(?P<end>[^\s-]+)"
+                r"(?:\s+\[(?P<metadata>[^\]]*)\])?"
+                r"\s*$"
                 )
 
             try:
@@ -313,7 +251,7 @@ class MapParser:
                               [[c.start, c.end] for c in connections]) or
                               ([connection.end, connection.start] in
                               [[c.start, c.end] for c in connections])):
-                            continue
+                            raise MapParserError("tzzzz a w9")
                         connections.append(connection)
                     else:
                         raise MapParserError(
@@ -331,7 +269,6 @@ class MapParser:
                 raise MapParserError(f"Line {i}: {e.msg}")
 
         map_file.close()
-        cls._extra_check(hubs)
 
         return MapParser(
             nd_drones,
