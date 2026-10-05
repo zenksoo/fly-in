@@ -30,14 +30,8 @@ class FlyIn:
 
     @classmethod
     def _full_setup(cls) -> None:
-        try:
-            cls.map_data = MapParser.from_file(cls.args.map)
-        except MapParserError as e:
-            print(e)
+        cls.map_data = MapParser.from_file(cls.args.map)
 
-
-
-        return
         cls.simulation = DroneSimulation(cls.map_data)
         cls.visualizer = MlxVisualizer(CONFIG_PATH, cls.simulation)
 
@@ -87,7 +81,7 @@ def main() -> None:
     FlyIn.args = cli_argument_parser()
     try:
         FlyIn._full_setup()
-        return
+
 #         # map_data: MapParser = MapParser.from_file(args.map)
 
 #         # simulation = DroneSimulation(map_data)
@@ -119,7 +113,7 @@ def main() -> None:
                          ctypes.cast(id(FlyIn.visualizer), c_void_p))
 
         mlx.mlx_loop(FlyIn.visualizer.mlx_ptr)
-    except ValueError as e:
+    except BaseException as e:
         print(e, file=stderr)
         exit(1)
 
