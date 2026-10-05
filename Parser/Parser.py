@@ -228,11 +228,22 @@ class MapParser:
 
             hub_pattern = re.compile(
                 r"^(?P<type>start_hub|end_hub|hub):\s*"
-                r"(?P<name>[^\s]+)"
-                r"(?P<x>\s+-?\d+)"
-                r"(?P<y>\s+-?\d+)"
-                r'(?P<metadata>(\s+\[.*\]))?')
+                r"(?P<name>\S+)\s+"
+                r"(?P<x>-?\d+)\s+"
+                r"(?P<y>-?\d+)"
+                r"(?:\s+\[(?P<metadata>[^\]]*)\])?"
+                r"\s*$"
+            )
 
+            match = hub_pattern.match(line)
+            if match:
+                print("maching pattern")
+                print(match["type"])
+                print(match["name"])
+                print(match["x"], match["y"])
+                print(match["metadata"])
+
+            continue
             connection_pattern = re.compile(
                 r"^connection\s*:\s+"
                 r"(?P<start>[^\s]+)"
