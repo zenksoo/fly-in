@@ -174,11 +174,11 @@ class DroneSimulation:
         for drone in simulation.READY_TO_MOVE_DRONES:
             simulation._move_toward(drone, visualizer.drones_layer,
                                     visualizer.wcfg.enable_drones_path)
-
+        visualizer._update_hub_capacity_label()
         if all([simulation._drone_arrived(d)
                 for d in simulation.READY_TO_MOVE_DRONES]):
             simulation.turn += 1
-            visualizer._update_hub_capacity_label()
+
             if simulation.turn < len(simulation.solution):
                 simulation._update_moved_drones()
             if (simulation.turn > 9):
@@ -187,6 +187,6 @@ class DroneSimulation:
                 new_content = f"TURN: 0{simulation.turn}"
             MlxCanvas._update_text(visualizer.text_layer,
                                    visualizer.turns_label, new_content)
-            time.sleep(0.3)
+            time.sleep(0.5)
         if simulation.turn >= len(simulation.solution):
             simulation.TURNS_FINISHED = True
