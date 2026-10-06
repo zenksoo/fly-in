@@ -5,9 +5,9 @@ from CExceptions import MapParserError
 from Parser import MapParser
 from sys import stderr
 import ctypes
-from PathFinding import PathFinding
+from PathFinding import PathFinding, Vertex
 from Simulation import DroneSimulation
-
+from typing import List
 
 CONFIG_PATH = "./config.toml"
 
@@ -38,7 +38,16 @@ class FlyIn:
         cls.visualizer.init_window()
         cls.visualizer.init_map()
 
-        cls.simulation.solution = PathFinding._core(cls.map_data.connections, cls.map_data.hubs)
+        for drone in cls.simulation.drones.values():
+            drone_path = PathFinding._core(drone,
+                                           cls.map_data.connections,
+                                           cls.map_data.hubs)
+            print(".>", drone_path)
+
+        # tmp: List[Vertex] = PathFinding._core(cls.map_data.connections, cls.map_data.hubs)
+        # for v in tmp:
+        #     print(v.name, end="   ")
+        # print("\n\n\n\n")
         cls.simulation.solution = [
             ["D1-start-gate", "D2-start-gate", "D3-start-gate",
              "D4-start-gate", "D5-start-gate", "D6-start-gate",
@@ -73,7 +82,7 @@ class FlyIn:
 
         cls.visualizer._update_hub_capacity_label()
 
-        cls.simulation._update_moved_drones()
+        # cls.simulation._update_moved_drones()
 
 
 def main() -> None:

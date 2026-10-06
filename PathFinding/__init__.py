@@ -1,1 +1,1 @@
-from .dijkstra_algo import PathFinding
+from .dijkstra_algo import PathFinding, Vertex

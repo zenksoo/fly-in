@@ -17,7 +17,7 @@ class Vertex:
         self.visited: bool = False
 
 
-class GraphTheory(ABC):
+class Graph(ABC):
     @staticmethod
     def _create_vertex_from_hubs(data: Dict[str, Hub]) -> List[Vertex]:
         def _set_vertext_type_and_zone(vertex: Vertex,
@@ -78,19 +78,60 @@ class GraphTheory(ABC):
 
 class PathFinding(ABC):
     @staticmethod
-    def _core(connections: List[Connection],
+    def _core(drone: Drone,
+              connections: List[Connection],
               hubs: Dict[str, Hub]
-              ) -> List[List[str]]:
+              ) -> List[Vertex]:
 
-        solution: List[List[str]] = []
+        solutions: List[List[Vertex]] = [] ## this is queue
+        solution: List[Vertex] = []
+        # append list on it
+        # sort them using the len key
+        # pop the smallest from the queue
 
-        vertexs = GraphTheory._create_vertex_from_hubs(hubs)
 
-        graph = GraphTheory._create_adjacency_list_graph(vertexs, connections)
+        vertexs = Graph._create_vertex_from_hubs(hubs)
 
-        for e in graph.keys():
-            print(e.name, e.type)
-            for ne in graph[e]:
-                print("     ", ne.name, ne.type, ne.zone)
+        graph = Graph._create_adjacency_list_graph(vertexs, connections)
 
+        for vertex in graph.keys():
+            if vertex.type == VertexType.START:
+                solutions.append([vertex])
+                vertex.visited = True
+                break
+
+        while True:
+            while True:
+                small_path: List[Vertex] = solutions.pop()
+                print([p.name for p in small_path])
+                if small_path[-1].type == VertexType.END:
+                    solution = small_path
+                    small_path = []
+                    break
+                elif len(graph[small_path[-1]]) == 0:
+                    continue
+                else:
+                    break
+
+            if not small_path:
+                break
+
+            for ne in graph[small_path[-1]]:
+                if not ne.visited:
+                    solutions.append(small_path + [ne])
+                    ne.visited = True
+
+            solutions = sorted(solutions, key=lambda x: len(x))
+
+
+        test: List[str] = []
+        if solution:
+            for i in range(len(solution)):
+                if (solution[i].type == VertexType.START):
+                    continue
+                if solution[i].zone == ZoneTypes.restricted:
+                    test.append(f"{drone.id}-{solution[i - 1].name}-{solution[i].name}")
+                else:
+                    test.append(f"{drone.id}-{solution[i].name}")
+        print(test)
         return solution
