@@ -41,6 +41,8 @@ class FlyIn:
         tt = PathFinding._core(cls.simulation.drones,
                                            cls.map_data.connections,
                                            cls.map_data.hubs)
+
+        print(tt)
         # tmp: List[Vertex] = PathFinding._core(cls.map_data.connections, cls.map_data.hubs)
         # for v in tmp:
         #     print(v.name, end="   ")

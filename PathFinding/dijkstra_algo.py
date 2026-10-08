@@ -92,13 +92,7 @@ class PathFinding(ABC):
         pass
 
     @staticmethod
-    def _core(drones: Dict[str, Drone],
-              connections: List[Connection],
-              hubs: Dict[str, Hub]
-              ) -> List[Vertex]:
-
-        turn: int = 0
-
+    def _dijkstra_algo(hubs: Dict[str, Hub], connections: List[Connection]) -> List[Vertex]:
         solutions: List[List[Vertex]] = [] ## this is queue
         solution: List[Vertex] = []
         # append list on it
@@ -109,9 +103,6 @@ class PathFinding(ABC):
 
         # create loop throw the drones and each drone pick his path as turns
         # so by default the djikstra algothim pick the short path depend on total of turns need drone to arrive
-
-        for drone in drones.values():
-            pass
 
         for vertex in graph.keys():
             if vertex.type == VertexType.START:
@@ -141,10 +132,18 @@ class PathFinding(ABC):
                     ne.visited = True
 
             solutions = sorted(solutions, key=lambda x: len(x))
-
-
-        # test: List[str] = []
-        # if solution:
-        #
-        # print(test)
         return solution
+
+    @staticmethod
+    def _core(drones: Dict[str, Drone],
+              connections: List[Connection],
+              hubs: Dict[str, Hub]
+              ) -> List[List[str]]:
+
+        turn: int = 0
+        solution: List[List[str]] = []
+
+
+        return solution
+
+

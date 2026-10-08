@@ -2,14 +2,18 @@ nb_drones: 5
 
 start_hub: start 0 0 [color=green]
 
-hub: h1 1 0 [color=blue max_drones=1]
-hub: h2 1 1 [color=blue max_drones=3]
+hub: h1 2 0 [color=blue max_drones=1]
+hub: h2 2 1 [color=blue max_drones=3]
 
-hub: h3 2 0 [color=blue zone=blocked]
-hub: h4 2 1 [color=blue]
+hub: h3 4 0 [color=blue zone=blocked]
+hub: h4 4 1 [color=blue]
+hub: h5 4 2 [color=orange]
+
+hub: h6 6 0 [color=orange]
+hub: h7 6 1 [color=orange]
 
 
-end_hub: end 2 2 [color=red]
+end_hub: end 6 2 [color=red]
 
 connection: start-h1 [max_link_capacity=1]
 connection: start-h2 [max_link_capacity=2]
@@ -18,6 +22,11 @@ connection: h1-h2 [max_link_capacity=1]
 connection: h1-h3
 connection: h2-h4 [max_link_capacity=2]
 
-connection: h4-end
+connection: h2-h5
 
+connection: h4-h6
+connection: h4-h7
+
+connection: h6-h7
+connection: h7-end [max_link_capacity=2]
 connection: h2-end [max_link_capacity=2]
