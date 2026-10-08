@@ -38,12 +38,9 @@ class FlyIn:
         cls.visualizer.init_window()
         cls.visualizer.init_map()
 
-        for drone in cls.simulation.drones.values():
-            drone_path = PathFinding._core(drone,
+        tt = PathFinding._core(cls.simulation.drones,
                                            cls.map_data.connections,
                                            cls.map_data.hubs)
-            print(".>", drone_path)
-
         # tmp: List[Vertex] = PathFinding._core(cls.map_data.connections, cls.map_data.hubs)
         # for v in tmp:
         #     print(v.name, end="   ")

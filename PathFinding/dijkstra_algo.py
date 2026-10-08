@@ -14,17 +14,18 @@ class Vertex:
         self.name: str = name
         self.type: VertexType
         self.zone: ZoneTypes
+        self.capacity = 0
+        self.drones_in = 0
         self.visited: bool = False
 
 
 class Graph(ABC):
     @staticmethod
     def _create_vertex_from_hubs(data: Dict[str, Hub]) -> List[Vertex]:
-        def _set_vertext_type_and_zone(vertex: Vertex,
-                                       hub_type: Hub
-                                       ) -> None:
+        def _set_vertext_type_and_zone(vertex: Vertex) -> None:
 
             vertex.zone = hub.metadata.zone
+            vertex.capacity = hub.metadata.max_drones
 
             if hub.type == HubType.start_hub:
                 vertex.type = VertexType.START
@@ -36,7 +37,7 @@ class Graph(ABC):
         vertex_lst: List[Vertex] = []
         for hub in data.values():
             vertex = Vertex(hub.name)
-            _set_vertext_type_and_zone(vertex, hub)
+            _set_vertext_type_and_zone(vertex)
 
             vertex_lst.append(vertex)
 
@@ -45,7 +46,7 @@ class Graph(ABC):
 
     @staticmethod
     def _create_adjacency_list_graph(
-        data: List[Vertex],
+        hubs: Dict[str, Hub],
         connections: List[Connection]) -> Dict[Vertex, List[Vertex]]:
 
         def _get_vertex_by_name(vertexs: List[Vertex], vertex_name: str) -> Vertex | None:
@@ -55,6 +56,7 @@ class Graph(ABC):
             return None
 
         adjacency_list: Dict[Vertex, List[Vertex]] = {}
+        data = Graph._create_vertex_from_hubs(hubs)
         # init empty edges
         for vertex in data:
             adjacency_list[vertex] = []
@@ -78,10 +80,24 @@ class Graph(ABC):
 
 class PathFinding(ABC):
     @staticmethod
-    def _core(drone: Drone,
+    def _convert_solution_to_str_list(solution: Dict[str, List[Vertex]]) -> List[str]:
+        result: List[str] = []
+
+        return result
+
+    @staticmethod
+    def _pick_best_path(drone: Drone, graph: Dict[Vertex, List[Vertex]],
+                        old_paths: List[List[str]]):
+
+        pass
+
+    @staticmethod
+    def _core(drones: Dict[str, Drone],
               connections: List[Connection],
               hubs: Dict[str, Hub]
               ) -> List[Vertex]:
+
+        turn: int = 0
 
         solutions: List[List[Vertex]] = [] ## this is queue
         solution: List[Vertex] = []
@@ -89,10 +105,13 @@ class PathFinding(ABC):
         # sort them using the len key
         # pop the smallest from the queue
 
+        graph = Graph._create_adjacency_list_graph(hubs, connections)
 
-        vertexs = Graph._create_vertex_from_hubs(hubs)
+        # create loop throw the drones and each drone pick his path as turns
+        # so by default the djikstra algothim pick the short path depend on total of turns need drone to arrive
 
-        graph = Graph._create_adjacency_list_graph(vertexs, connections)
+        for drone in drones.values():
+            pass
 
         for vertex in graph.keys():
             if vertex.type == VertexType.START:
@@ -124,14 +143,8 @@ class PathFinding(ABC):
             solutions = sorted(solutions, key=lambda x: len(x))
 
 
-        test: List[str] = []
-        if solution:
-            for i in range(len(solution)):
-                if (solution[i].type == VertexType.START):
-                    continue
-                if solution[i].zone == ZoneTypes.restricted:
-                    test.append(f"{drone.id}-{solution[i - 1].name}-{solution[i].name}")
-                else:
-                    test.append(f"{drone.id}-{solution[i].name}")
-        print(test)
+        # test: List[str] = []
+        # if solution:
+        #
+        # print(test)
         return solution
