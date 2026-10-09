@@ -59,22 +59,20 @@ class Graph(ABC):
         data = Graph._create_vertex_from_hubs(hubs)
         # init empty edges
         for vertex in data:
-            adjacency_list[vertex] = []
+            if vertex.zone != ZoneTypes.blocked:
+                adjacency_list[vertex] = []
 
         for con in connections:
             start = _get_vertex_by_name(data, con.start)
             end = _get_vertex_by_name(data, con.end)
 
             if start and end:
-                if start in adjacency_list:
+                if start.zone != ZoneTypes.blocked and end.zone != ZoneTypes.blocked:
                     adjacency_list[start].append(end)
-                else:
-                    adjacency_list[start] = [end]
-
-                if end in adjacency_list:
                     adjacency_list[end].append(start)
-                else:
-                    adjacency_list[end] = [start]
+                    # if end in adjacency_list:
+                    # else:
+                    #     adjacency_list[end] = [start]
         return adjacency_list
 
 
@@ -139,6 +137,17 @@ class PathFinding(ABC):
               connections: List[Connection],
               hubs: Dict[str, Hub]
               ) -> List[List[str]]:
+
+        graph = Graph._create_adjacency_list_graph(hubs, connections)
+
+
+        for vertex in graph.keys():
+            print("#"*10, vertex.name, "#"*10)
+            for neighbor in graph[vertex]:
+                print(neighbor.name, end=", ")
+            print("\n")
+
+
 
         turn: int = 0
         solution: List[List[str]] = []
