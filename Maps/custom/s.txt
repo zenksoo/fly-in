@@ -3,7 +3,7 @@ nb_drones: 5
 start_hub: start 0 0 [color=green]
 
 hub: h1 2 0 [color=blue max_drones=1]
-hub: h2 2 1 [color=blue max_drones=3]
+hub: h2 2 1 [color=blue max_drones=3 zone=restricted]
 
 hub: h3 4 0 [color=blue zone=blocked]
 hub: h4 4 1 [color=blue]
@@ -13,7 +13,7 @@ hub: h6 6 0 [color=orange]
 hub: h7 6 1 [color=orange]
 
 
-end_hub: end 6 2 [color=red]
+end_hub: end 6 2 [color=red zone=restricted]
 
 connection: start-h1 [max_link_capacity=1]
 connection: start-h2 [max_link_capacity=2]
