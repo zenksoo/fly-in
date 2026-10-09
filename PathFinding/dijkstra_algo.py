@@ -3,6 +3,7 @@ from typing import List, Dict
 from enum import Enum
 from abc import ABC
 
+
 class VertexType(str, Enum):
     START = "start"
     NORAML = "normal"
@@ -78,26 +79,30 @@ class Graph(ABC):
 
 class PathFinding(ABC):
     @staticmethod
-    def _convert_solution_to_str_list(solution: Dict[str, List[Vertex]]) -> List[str]:
+    def _reset_visited_vertex(vertexs: List[Vertex]) -> None:
+        for vertex in vertexs:
+            vertex.visited = False
+
+    @staticmethod
+    def _format_the_path(path: List[Vertex], drone_id: str) -> List[str]:
         result: List[str] = []
+
+        for i in range(len(path)):
+            if path[i].zone == ZoneTypes.restricted:
+                result.append(f"{drone_id}-{path[i - 1].name}-{path[i].name}")
+                result.append(f"{drone_id}-{path[i].name}")
+            else:
+                result.append(f"{drone_id}-{path[i].name}")
 
         return result
 
     @staticmethod
-    def _pick_best_path(drone: Drone, graph: Dict[Vertex, List[Vertex]],
-                        old_paths: List[List[str]]):
-
-        pass
-
-    @staticmethod
-    def _dijkstra_algo(hubs: Dict[str, Hub], connections: List[Connection]) -> List[Vertex]:
+    def _dijkstra_algo(graph: Dict[Vertex, List[Vertex]]) -> List[Vertex]:
         solutions: List[List[Vertex]] = [] ## this is queue
         solution: List[Vertex] = []
         # append list on it
         # sort them using the len key
         # pop the smallest from the queue
-
-        graph = Graph._create_adjacency_list_graph(hubs, connections)
 
         # create loop throw the drones and each drone pick his path as turns
         # so by default the djikstra algothim pick the short path depend on total of turns need drone to arrive
@@ -110,12 +115,12 @@ class PathFinding(ABC):
 
         while True:
             while True:
-                small_path: List[Vertex] = solutions.pop()
-                print([p.name for p in small_path])
+                small_path: List[Vertex] = solutions.pop(0)
                 if small_path[-1].type == VertexType.END:
                     solution = small_path
                     small_path = []
                     break
+                # if there is no neighbors for the vertex, mean uncomplated route so remove them
                 elif len(graph[small_path[-1]]) == 0:
                     continue
                 else:
@@ -129,8 +134,26 @@ class PathFinding(ABC):
                     solutions.append(small_path + [ne])
                     ne.visited = True
 
-            solutions = sorted(solutions, key=lambda x: len(x))
+            solutions = sorted(solutions,
+                               key=(
+                                   lambda x: sum(
+                                       [2 if e.zone == ZoneTypes.restricted else 1 for e in x]
+                                       )
+                                   ))
         return solution
+
+    @staticmethod
+    def  _pick_drone_route(previes_routes: Dict[str, List[Vertex]],
+                          grap: Dict[Vertex, List[Vertex]]
+                          ) -> List[Vertex]:
+        route: List[Vertex] = []
+
+        if not previes_routes:
+            route = PathFinding._dijkstra_algo(grap)
+        else:
+            pass
+
+        return route
 
     @staticmethod
     def _core(drones: Dict[str, Drone],
@@ -140,18 +163,23 @@ class PathFinding(ABC):
 
         graph = Graph._create_adjacency_list_graph(hubs, connections)
 
+        # short_path = PathFinding._dijkstra_algo(graph)
 
-        for vertex in graph.keys():
-            print("#"*10, vertex.name, "#"*10)
-            for neighbor in graph[vertex]:
-                print(neighbor.name, end=", ")
-            print("\n")
+        # print("#" * 10, " shortest path is ", "#"*10)
+        # for vertex in short_path:
+        #     print(vertex.name, end=", ")
+        # print("\n\n")
 
+        drones_solution: Dict[str, List[Vertex]] = {}
 
+        for drone_id in drones.keys():
+            PathFinding._reset_visited_vertex(list(graph.keys()))
+            drones_solution[drone_id] = PathFinding._pick_drone_route(drones_solution, graph)
+            print(PathFinding._format_the_path(drones_solution[drone_id], drone_id))
+            break
 
         turn: int = 0
         solution: List[List[str]] = []
-
 
         return solution
 
