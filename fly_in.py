@@ -40,11 +40,12 @@ class FlyIn:
 
         PathFinding.connections = cls.map_data.connections
 
-        tt = PathFinding._core(cls.simulation.drones,
+        tt = PathFinding.plan_all_drones(cls.simulation.drones,
                                            cls.map_data.connections,
                                            cls.map_data.hubs)
 
         print(tt)
+        print(len(tt))
         cls.simulation.solution = tt
         # tmp: List[Vertex] = PathFinding._core(cls.map_data.connections, cls.map_data.hubs)
         # for v in tmp:
@@ -84,7 +85,7 @@ class FlyIn:
 
         cls.visualizer._update_hub_capacity_label()
 
-        # cls.simulation._update_moved_drones()
+        cls.simulation._update_moved_drones()
 
 
 def main() -> None:
