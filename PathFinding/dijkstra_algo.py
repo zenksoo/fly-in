@@ -83,6 +83,18 @@ class PathFinding(ABC):
     connections: List[Connection]
     vertexs: List[Vertex]
     planned_routes: Dict[str, List[Tuple[int, str]]] = {}
+    vertex_capacity_register: Dict[str, Dict[Vertex, int]] = {}
+
+    @classmethod
+    def _update_vertex_capacity_at_turn(cls, vertex: Vertex, turn: int) -> None:
+        key = f"turn_{turn}"
+        if (cls.vertex_capacity_register.get(key)):
+            if cls.vertex_capacity_register[key].get(vertex):
+                cls.vertex_capacity_register[key][vertex] += 1
+            else:
+                cls.vertex_capacity_register[key][vertex] = 1
+        else:
+            cls.vertex_capacity_register[key] = {vertex: 1}
 
     @classmethod
     def _find_vertex(cls, target_name: str) -> Vertex | None:

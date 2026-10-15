@@ -11,7 +11,6 @@ from typing import List
 
 CONFIG_PATH = "./config.toml"
 
-
 def cli_argument_parser() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Fly-In")
     parser.add_argument(
