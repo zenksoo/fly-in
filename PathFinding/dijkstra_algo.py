@@ -2,145 +2,141 @@ from Utils import Connection, Drone, Hub, HubType, ZoneTypes
 from typing import List, Dict, Tuple
 from enum import Enum
 from abc import ABC
-
-
-class VertexType(str, Enum):
-    START = "start"
-    NORMAL = "normal"
-    END = "end"
-
-
-class Vertex:
-    def __init__(self, name: str) -> None:
-        self.name: str = name
-        self.type: VertexType
-        self.zone: ZoneTypes
-        self.max_drones: int
-        self.capacity = 0
-        self.drones_in = 0
-        self.visited: bool = False
-
+from heapq import heappush, heappop
+from functools import total_ordering
 
 class GraphBuilder(ABC):
     @staticmethod
-    def build_vertices_from_hubs(data: Dict[str, Hub]) -> List[Vertex]:
-        def _apply_hub_settings(vertex: Vertex) -> None:
-
-            vertex.zone = hub.metadata.zone
-            vertex.capacity = hub.metadata.max_drones
-
-
-            if hub.type == HubType.start_hub:
-                vertex.type = VertexType.START
-            elif hub.type == HubType.hub:
-                vertex.type = VertexType.NORMAL
-            elif hub.type == HubType.end_hub:
-                vertex.type = VertexType.END
-
-        vertex_lst: List[Vertex] = []
-        for hub in data.values():
-            vertex = Vertex(hub.name)
-            _apply_hub_settings(vertex)
-
-            vertex_lst.append(vertex)
-
-        return vertex_lst
-
-
-    @staticmethod
     def build_adjacency_list(
         hubs: Dict[str, Hub],
-        connections: List[Connection]) -> Dict[Vertex, List[Vertex]]:
+        connections: List[Connection]) -> Dict[str, List[Hub]]:
 
-        def _get_vertex_by_name(vertexs: List[Vertex], vertex_name: str) -> Vertex | None:
-            for vertex in vertexs:
-                if vertex.name == vertex_name:
-                    return vertex
+        def _get_hub_by_name(hubs: List[Hub], hub_name: str) -> Hub | None:
+            for hub in hubs:
+                if hub.name == hub_name:
+                    return hub
             return None
 
-        adjacency_list: Dict[Vertex, List[Vertex]] = {}
-        data = GraphBuilder.build_vertices_from_hubs(hubs)
+        adjacency_list: Dict[str, List[Hub]] = {}
         # init empty edges
-        for vertex in data:
-            if vertex.zone != ZoneTypes.blocked:
-                adjacency_list[vertex] = []
+        for hub in hubs.values():
+            if hub.metadata.zone != ZoneTypes.blocked:
+                adjacency_list[hub.name] = []
 
         for con in connections:
-            start = _get_vertex_by_name(data, con.start)
-            end = _get_vertex_by_name(data, con.end)
+            start = _get_hub_by_name(list(hubs.values()), con.start)
+            end = _get_hub_by_name(list(hubs.values()), con.end)
 
             if start and end:
-                if start.zone != ZoneTypes.blocked and end.zone != ZoneTypes.blocked:
-                    adjacency_list[start].append(end)
-                    adjacency_list[end].append(start)
-                    # if end in adjacency_list:
-                    # else:
-                    #     adjacency_list[end] = [start]
+                if (start.metadata.zone != ZoneTypes.blocked and
+                    end.metadata.zone != ZoneTypes.blocked):
+                    adjacency_list[start.name].append(end)
+                    adjacency_list[end.name].append(start)
+
         return adjacency_list
+
+
+@total_ordering
+class Step:
+    def __init__(self, turn: int = 0, name: str = "") -> None:
+        self.turn = turn
+        self.dest_name: str = name
+        self.origin: Hub
+        self.dest: Hub
+
+    def __lt__(self, other):
+
+        return True
 
 
 class PathFinding(ABC):
     connections: List[Connection]
-    vertexs: List[Vertex]
-    planned_routes: Dict[str, List[Tuple[int, str]]] = {}
-    vertex_capacity_register: Dict[str, Dict[Vertex, int]] = {}
+    hubs: List[Hub] = []
+    planned_routes: Dict[str, List[Step]] = {}
 
     @classmethod
-    def _update_vertex_capacity_at_turn(cls, vertex: Vertex, turn: int) -> None:
-        key = f"turn_{turn}"
-        if (cls.vertex_capacity_register.get(key)):
-            if cls.vertex_capacity_register[key].get(vertex):
-                cls.vertex_capacity_register[key][vertex] += 1
-            else:
-                cls.vertex_capacity_register[key][vertex] = 1
-        else:
-            cls.vertex_capacity_register[key] = {vertex: 1}
-
-    @classmethod
-    def _find_vertex(cls, target_name: str) -> Vertex | None:
-        for vertex in cls.vertexs:
-            if vertex.name == target_name:
-                return vertex
+    def _find_hub(cls, target_name: str) -> Hub | None:
+        for hub in cls.hubs:
+            if hub.name == target_name:
+                return hub
         return None
 
     @classmethod
-    def _can_enter_vertex(cls, source_vertex: Vertex, target_name: str, occupied_positions: List[str]) -> bool:
+    def can_enter_hub(cls, source: Hub, dest: Hub, occupied_positions: List[str]) -> bool:
         occupant_count = 0
         connection: Connection | None = None
         for con in cls.connections:
-            if con.start == source_vertex.name and con.end == target_name:
+            if ((con.start == source.name and con.end == dest.name) or
+                (con.start == dest.name and con.end == source.name)):
                 connection = con
 
         for position in occupied_positions:
-            if position == target_name:
+            if position == dest.name:
                 occupant_count += 1
 
-        vertex = cls._find_vertex(target_name)
-
-        if vertex and connection:
-            return vertex.capacity > occupant_count and connection.metadata.max_link_capacity > occupant_count
+        if connection:
+            return connection.metadata.max_link_capacity > occupant_count and dest.metadata.max_drones > occupant_count
 
         return False
 
     @classmethod
-    def _can_use_connection(cls, connection_label: str, current_status: List[str]) -> bool:
+    def can_use_connection(cls, source: Hub, dest: Hub, occupied_positions: List[str]) -> bool:
         occupant_count = 0
-        for position in current_status:
-            if position == connection_label:
+        connection: Connection | None = None
+
+        for position in occupied_positions:
+            if position == f"{source.name}-{dest.name}":
                 occupant_count += 1
 
-        connection: Connection | None = None
-        start = connection_label.split("-")[0]
-        end = connection_label.split("-")[1]
-
         for con in cls.connections:
-            if con.start == start and con.end == end:
+            if ((con.start == source.name and con.end == dest.name) or
+                (con.start == dest.name and con.end == source.name)):
                 connection = con
+                break
 
         if connection:
             return connection.metadata.max_link_capacity > occupant_count
 
         return False
+
+    # @classmethod
+    # def _can_enter_hub(cls, source_hub: Hub, target_name: str, occupied_positions: List[str]) -> bool:
+    #     occupant_count = 0
+    #     connection: Connection | None = None
+    #     for con in cls.connections:
+    #         if con.start == source_hub.name and con.end == target_name:
+    #             connection = con
+
+    #     for position in occupied_positions:
+    #         if position == target_name:
+    #             occupant_count += 1
+
+    #     hub = cls._find_hub(target_name)
+
+    #     if hub and connection:
+    #         return hub.metadata.max_drones > occupant_count
+
+    #     return False
+
+    # @classmethod
+    # def _can_use_connection(cls, connection_label: str, current_status: List[str]) -> bool:
+    #     occupant_count = 0
+    #     for position in current_status:
+    #         if position == connection_label:
+    #             occupant_count += 1
+
+    #     connection: Connection | None = None
+    #     start = connection_label.split("-")[0]
+    #     end = connection_label.split("-")[1]
+
+    #     for con in cls.connections:
+    #         if con.start == start and con.end == end:
+    #             connection = con
+
+    #     if connection:
+    #         return connection.metadata.max_link_capacity > occupant_count
+
+    #     return False
 
 
     @classmethod
@@ -149,22 +145,28 @@ class PathFinding(ABC):
 
         for route in cls.planned_routes.values():
             for step in route:
-                if (step[0] == turn):
-                    occupied_positions.append(step[1])
+                if (step.turn - 1 == turn and step.dest.metadata.zone == ZoneTypes.restricted and
+                    step.dest != step.origin):
+                    label = f"{step.origin.name}-{step.dest.name}"
+                    occupied_positions.append(label)
+                elif (step.turn == turn):
+                    occupied_positions.append(step.dest.name)
 
         return occupied_positions
 
 
     @staticmethod
-    def _reset_visited_flags(vertexs: List[Vertex]) -> None:
-        for vertex in vertexs:
-            vertex.visited = False
+    def _reset_visited_flags(Hubs: List[Hub]) -> None:
+        for hub in Hubs:
+            print(hub.name)
+            hub.visited = False
 
 
     @classmethod
-    def _find_route_for_drone(cls, graph: Dict[Vertex, List[Vertex]]) -> List[Tuple[int, str]]:
-        route_queue: List[List[Tuple[int, str]]] = [] ## this is queue
-        best_route: List[Tuple[int, str]] = []
+    def _find_route_for_drone(cls, graph: Dict[str, List[Hub]]) -> List[Step]:
+        # route_queue List[List[Tuple[cost, Step]]]
+        route_queue: List[Tuple[float, List[Step]]] = [] ## this is queue
+        best_route: List[Step] = []
         # append list on it
         # sort them using the len key
         # pop the smallest from the queue
@@ -172,28 +174,31 @@ class PathFinding(ABC):
         # create loop throw the drones and each drone pick his path as turns
         # so by default the djikstra algothim pick the short path depend on total of turns need drone to arrive
 
-        for vertex in graph.keys():
-            if vertex.type == VertexType.START:
-                route_queue.append([(0, vertex.name)])
-                vertex.visited = True
+        for hub_name in graph.keys():
+            hub = cls._find_hub(hub_name)
+            if hub and hub.type == HubType.start_hub:
+                step = Step(0, hub.name)
+                step.dest = hub
+                step.origin = hub
+                heappush(route_queue, (0, [step]))
+                hub.visited = True
                 break
 
         while True:
             while True:
-                current_route: List[Tuple[int, str]] = route_queue.pop(0)
-                if "-" in current_route[-1][1]:
-                    current_vertex: Vertex | None = cls._find_vertex(current_route[-1][1].split("-")[1])
-                else:
-                    current_vertex: Vertex | None = cls._find_vertex(current_route[-1][1])
-                if not current_vertex:
-                    raise ValueError(f"There is no Vertex object with name `{current_route[-1][1]}`")
+                smallest_route: Tuple[float, List[Step]] = heappop(route_queue)
 
-                if current_vertex.type == VertexType.END:
+                cost, current_route = smallest_route
+
+                current_step = current_route[-1]
+
+                current_dest: Hub = current_step.dest
+                if current_dest.type == HubType.end_hub:
                     best_route = current_route
                     current_route = []
                     break
                 # if there is no neighbors for the vertex, mean uncomplated route so remove them
-                elif len(graph[current_vertex]) == 0:
+                elif len(graph[current_dest.name]) == 0:
                     continue
                 else:
                     break
@@ -201,53 +206,81 @@ class PathFinding(ABC):
             if not current_route:
                 break
 
-            next_turn = current_route[-1][0] + 1
-            reference_turn = -1
+            next_turn = current_step.turn + 1
 
-            for i in range(len(current_route) - 1, 0, -1):
-                if current_route[i][1] == current_route[i - 1]:
-                    reference_turn = i
 
-            if reference_turn == -1:
-                reference_turn = next_turn
-
-            print("current vertex: ", current_vertex.name)
-            for neighbor in graph[current_vertex]:
+            print("current vertex: ", current_dest.name)
+            for neighbor in graph[current_dest.name]:
                 print("\tvertex neighbor: ", neighbor.name)
                 if not neighbor.visited:
-                    tmp_route = current_route
                     neighbor.visited = True
-                    occupied_positions = cls._get_occupied_positions(reference_turn)
-                    # occupied_positions = [e[1] for s in cls.planned_routes.values() for e in s if e[0] == reference_turn]
-                    if neighbor.zone == ZoneTypes.restricted:
-                        if cls.planned_routes:
-                            if (cls._can_use_connection(f"{current_vertex.name}-{neighbor.name}", occupied_positions) and
-                                cls._can_enter_vertex(current_vertex, neighbor.name, cls._get_occupied_positions(reference_turn + 1))):
-                                tmp_route += [(next_turn, f"{current_vertex.name}-{neighbor.name}")]
-                                occupied_positions = cls._get_occupied_positions(reference_turn + 1)
-                                # occupied_positions = [e[1] for s in cls.planned_routes.values() for e in s if e[0] == reference_turn + 1]
-                                if (cls._can_enter_vertex(current_vertex, neighbor.name, occupied_positions)):
-                                    route_queue.append(tmp_route + [(next_turn + 1, neighbor.name)])
-                                else:
-                                    route_queue.append(tmp_route)
-                            else:
-                                route_queue.append(tmp_route + [(next_turn, current_route[-1][1])])
-                                neighbor.visited = False
+                    occupied_positions = cls._get_occupied_positions(next_turn)
+
+                    if neighbor.metadata.zone == ZoneTypes.restricted:
+                        # if cls.planned_routes:
+                        if (cls.can_use_connection(current_dest, neighbor, occupied_positions) and
+                            cls.can_enter_hub(current_dest, neighbor, cls._get_occupied_positions(next_turn + 1))):
+                            step = Step(next_turn + 1, f"{current_dest.name}-{neighbor.name}")
+                            step.dest = neighbor
+                            step.origin = current_dest
+                            heappush(route_queue, (cost + 2, current_route + [step]))
                         else:
-                            tmp_route += [(next_turn, f"{current_vertex.name}-{neighbor.name}")]
-                            route_queue.append(tmp_route + [(next_turn + 1, neighbor.name)])
+                            step = Step(next_turn, current_step.dest_name)
+                            step.dest = current_dest
+                            step.origin = current_dest
+                            heappush(route_queue, (cost + 1, current_route + [step]))
+                            neighbor.visited = False
 
                     else:
-                        if cls.planned_routes:
-                            if cls._can_enter_vertex(current_vertex, neighbor.name, occupied_positions):
-                                route_queue.append(tmp_route + [(next_turn, neighbor.name)])
+                        if (cls.can_enter_hub(current_dest, neighbor, occupied_positions)):
+                            step = Step(next_turn, f"{neighbor.name}")
+                            step.dest = neighbor
+                            step.origin = current_dest
+                            if neighbor.metadata.zone == ZoneTypes.priority:
+                                heappush(route_queue, (cost + 0.9, current_route + [step]))
                             else:
-                                route_queue.append(tmp_route + [(next_turn, current_route[-1][1])])
-                                neighbor.visited = False
+                                heappush(route_queue, (cost + 1, current_route + [step]))
                         else:
-                            route_queue.append(tmp_route + [(next_turn, neighbor.name)])
+                            step = Step(next_turn, current_step.dest_name)
+                            step.dest = current_dest
+                            step.origin = current_dest
+                            heappush(route_queue, (cost + 1, current_route + [step]))
+                            neighbor.visited = False
 
-            route_queue = sorted(route_queue, key=lambda x: len(x))
+
+                    # tmp_route = smallest_route
+                    # neighbor.visited = True
+                    # occupied_positions = cls._get_occupied_positions(next_turn)
+                    # # occupied_positions = [e[1] for s in cls.planned_routes.values() for e in s if e[0] == reference_turn]
+                    # if neighbor.metadata.zone == ZoneTypes.restricted:
+                    #     if cls.planned_routes:
+                    #         if (cls._can_use_connection(f"{current_dest.name}-{neighbor.name}", occupied_positions) and
+                    #             cls._can_enter_hub(current_dest, neighbor.name, cls._get_occupied_positions(next_turn + 1))):
+                    #             tmp_route += [(cost + 1, f"{current_dest.name}-{neighbor.name}")]
+                    #             occupied_positions = cls._get_occupied_positions(next_turn + 1)
+                    #             # occupied_positions = [e[1] for s in cls.planned_routes.values() for e in s if e[0] == reference_turn + 1]
+                    #             if (cls._can_enter_hub(current_dest, neighbor.name, occupied_positions)):
+                    #                 route_queue.append(tmp_route + [(next_turn + 1, neighbor.name)])
+                    #             else:
+                    #                 route_queue.append(tmp_route)
+                    #         else:
+                    #             route_queue.append(tmp_route + [(next_turn, current_route[-1][1])])
+                    #             neighbor.visited = False
+                    #     else:
+                    #         tmp_route += [(next_turn, f"{current_dest.name}-{neighbor.name}")]
+                    #         route_queue.append(tmp_route + [(next_turn + 1, neighbor.name)])
+
+                    # else:
+                    #     if cls.planned_routes:
+                    #         if cls._can_enter_hub(current_dest, neighbor.name, occupied_positions):
+                    #             route_queue.append(tmp_route + [(next_turn, neighbor.name)])
+                    #         else:
+                    #             route_queue.append(tmp_route + [(next_turn, current_route[-1][1])])
+                    #             neighbor.visited = False
+                    #     else:
+                    #         route_queue.append(tmp_route + [(next_turn, neighbor.name)])
+
+            # route_queue = sorted(route_queue, key=lambda x: len(x))
         return best_route
 
 
@@ -258,18 +291,17 @@ class PathFinding(ABC):
               ) -> List[List[str]]:
 
         cls.connections = connections
+        cls.hubs = list(hubs.values())
 
         graph = GraphBuilder.build_adjacency_list(hubs, connections)
 
-        cls.vertexs = list(graph.keys())
-
         for drone_id in drones.keys():
-            PathFinding._reset_visited_flags(cls.vertexs)
+            cls._reset_visited_flags(cls.hubs)
             cls.planned_routes[drone_id] = PathFinding._find_route_for_drone(graph)
             print("#"*15, drone_id, "#"*15)
-            for turn_number, vertex_name in cls.planned_routes[drone_id]:
-                print("turn   : ", turn_number)
-                print("vertex : ", vertex_name)
+            for step in cls.planned_routes[drone_id]:
+                print("turn   : ", step.turn)
+                print("vertex : ", step.dest_name)
 
             print("\n\n")
 
@@ -277,23 +309,27 @@ class PathFinding(ABC):
         turn_number: int = 1
         moves_per_turn: List[List[str]] = []
 
-        # remove repeated instruction from the solution
-        for drone_id in cls.planned_routes.keys():
-            for i in range(len(cls.planned_routes[drone_id])):
-                j = i + 1
-                while j < len(cls.planned_routes[drone_id]) and cls.planned_routes[drone_id][i][1] == cls.planned_routes[drone_id][j][1]:
-                    cls.planned_routes[drone_id].remove(cls.planned_routes[drone_id][j])
-                    j += 1
+        # # remove repeated instruction from the solution
+        # for drone_id in cls.planned_routes.keys():
+        #     for i in range(len(cls.planned_routes[drone_id])):
+        #         j = i + 1
+        #         while j < len(cls.planned_routes[drone_id]) and cls.planned_routes[drone_id][i].dest_name == cls.planned_routes[drone_id][j].dest_name:
+        #             cls.planned_routes[drone_id].remove(cls.planned_routes[drone_id][j])
+        #             j += 1
 
         while True:
-            if all([step[0] != turn_number for route in cls.planned_routes.values() for step in route]):
+            if all([step.turn < turn_number for route in cls.planned_routes.values() for step in route]):
                 break
             turn_moves: List[str] = []
             for drone_id in cls.planned_routes.keys():
                 for step in cls.planned_routes[drone_id]:
-                    if step[0] == turn_number:
-                        turn_moves.append(f"{drone_id}-{step[1]}")
-                    elif step[0] > turn_number:
+                    if (step.turn - 1 == turn_number and step.dest.metadata.zone == ZoneTypes.restricted and
+                        step.origin != step.dest):
+                        label = f"{step.origin.name}-{step.dest.name}"
+                        turn_moves.append(f"{drone_id}-{label}")
+                    elif step.turn == turn_number:
+                        turn_moves.append(f"{drone_id}-{step.dest.name}")
+                    elif step.turn > turn_number:
                         break
 
             moves_per_turn.append(turn_moves)

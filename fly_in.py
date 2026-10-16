@@ -5,7 +5,7 @@ from CExceptions import MapParserError
 from Parser import MapParser
 from sys import stderr
 import ctypes
-from PathFinding import PathFinding, Vertex
+from PathFinding import PathFinding
 from Simulation import DroneSimulation
 from typing import List
 
@@ -36,8 +36,6 @@ class FlyIn:
 
         cls.visualizer.init_window()
         cls.visualizer.init_map()
-
-        PathFinding.connections = cls.map_data.connections
 
         tt = PathFinding.plan_all_drones(cls.simulation.drones,
                                            cls.map_data.connections,

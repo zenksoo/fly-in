@@ -73,6 +73,7 @@ class Hub(BaseModel):
     mlx_img: mlx_image_t | None = None
     metadata: HubMetaData = HubMetaData()
     gfx: HUBGfx = HUBGfx()
+    visited: bool = False
 
 
 class ConnectionMetadata(BaseModel):
