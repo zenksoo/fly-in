@@ -1,16 +1,16 @@
 from MLX.libmlx import mlx, c_void_p
 import argparse
 from Visualizer import MlxVisualizer
-from CExceptions import MapParserError, InvalidCliArgument
+from CExceptions import InvalidCliArgument
 from Parser import MapParser
 from sys import stderr
 import ctypes
 from PathFinding import PathFinding
 from Simulation import DroneSimulation
-from typing import List
 from pathlib import Path
 
 CONFIG_PATH = "./config.toml"
+
 
 def cli_argument_parser() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Fly-In")
@@ -23,19 +23,21 @@ def cli_argument_parser() -> argparse.Namespace:
         "-o", "--output", type=str,
         default="simulation_output.txt",
         help="path to drones routes solution file")
-    
+
     args = parser.parse_args()
-    
+
     # create path object for map and output to check it's a valid path or no
     map_file = Path(args.map)
     output_file = Path(args.output)
 
     if not map_file.is_file():
         raise InvalidCliArgument("Invalid value for --map\n\n\t\
-                                 Invalid path, does not exist, or points to a directory.")
+                                 Invalid path, does not exist,\
+                                 or points to a directory.")
     if output_file.is_dir():
         raise InvalidCliArgument("Invalid Value for --output\n\n\t\
-                                 Invalid path, must be path to a file not to a directory.")
+                                 Invalid path, must be path to a file\
+                                 not to a directory.")
     return parser.parse_args()
 
 
@@ -47,7 +49,7 @@ class FlyIn:
 
     @classmethod
     def _generate_simulation_output(cls) -> None:
-        print(f"\033[42m    Solution    \033[49m\n")
+        print("\033[42m    Solution    \033[49m\n")
         i = 1
         with open(cls.args.output, 'w') as f:
             for turn_steps in cls.simulation.solution:
@@ -57,7 +59,7 @@ class FlyIn:
                 f.write("\n")
                 print()
                 i += 1
-        print(f"\n\033[42m    TOTAL TURNS  \033[49m ", 
+        print("\n\033[42m    TOTAL TURNS  \033[49m ",
               len(cls.simulation.solution))
 
     @classmethod
@@ -70,9 +72,10 @@ class FlyIn:
         cls.visualizer.init_window()
         cls.visualizer.init_map()
 
-        cls.simulation.solution = PathFinding.plan_all_drones(cls.simulation.drones,
-                                           cls.map_data.connections,
-                                           cls.map_data.hubs)
+        cls.simulation.solution = PathFinding.plan_all_drones(
+            cls.simulation.drones,
+            cls.map_data.connections,
+            cls.map_data.hubs)
 
         cls._generate_simulation_output()
 
@@ -88,12 +91,12 @@ def main() -> None:
         FlyIn._full_setup()
 
         mlx.mlx_loop_hook(FlyIn.visualizer.mlx_ptr,
-                            FlyIn.simulation.movement_animation,
-                            ctypes.cast(id(FlyIn.visualizer), c_void_p))
+                          FlyIn.simulation.movement_animation,
+                          ctypes.cast(id(FlyIn.visualizer), c_void_p))
 
         mlx.mlx_key_hook(FlyIn.visualizer.mlx_ptr,
-                            FlyIn.visualizer.handel_input,
-                            ctypes.cast(id(FlyIn.visualizer), c_void_p))
+                         FlyIn.visualizer.handel_input,
+                         ctypes.cast(id(FlyIn.visualizer), c_void_p))
 
         mlx.mlx_loop(FlyIn.visualizer.mlx_ptr)
     except BaseException as e:
