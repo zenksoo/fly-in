@@ -84,8 +84,8 @@ class DroneSimulation:
 
         # step = max(abs(sx), abs(sy))
 
-        dx = sx / step
-        dy = sy / step
+        dx = sx / 50
+        dy = sy / 50
 
         return (dx, dy)
 
