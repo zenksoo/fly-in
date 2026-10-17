@@ -1,0 +1,11 @@
+nb_drones: 6
+start_hub: S 0 0
+hub: A 1 -2 [max_drones=2]
+hub: B 2 3 [zone=priority]
+hub: R 3 0 [zone=restricted max_drones=2]
+end_hub: E 4 0
+connection: S-A [max_link_capacity=2]
+connection: S-R [max_link_capacity=2]
+connection: A-B
+connection: A-R [max_link_capacity=2]
+connection: B-E [max_link_capacity=2]

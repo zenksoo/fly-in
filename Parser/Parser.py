@@ -71,7 +71,8 @@ class MapParser:
                 try:
                     metadata_dict[key] = ZoneTypes[val]
                 except KeyError:
-                    raise MapParserError(f"invalide zone type '{val}'")
+                    raise MapParserError(f"Unknown zone type '{val}'\n\n\t\
+                                         valid hub Zones: [normal blocked restricted priority]")
             elif key == "color":
                 try:
                     metadata_dict[key] = Colors[val]
@@ -210,7 +211,7 @@ class MapParser:
                         hub = cls._hub_handler(hub_match, hub_pattern)
                         if (hub.name in hubs.keys()):
                             raise MapParserError(
-                                "Doublicate Hub Name"
+                                f"Duplicate hub name '{hub.name}': each hub must have a unique name"
                             )
                         elif ('-' in hub.name):
                             raise MapParserError(
@@ -251,7 +252,7 @@ class MapParser:
                               [[c.start, c.end] for c in connections]) or
                               ([connection.end, connection.start] in
                               [[c.start, c.end] for c in connections])):
-                            raise MapParserError("tzzzz a w9")
+                            raise MapParserError(f"Duplicate connection: '{connection.start}-{connection.end}' is defined more than once")
                         connections.append(connection)
                     else:
                         raise MapParserError(

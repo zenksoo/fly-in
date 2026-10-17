@@ -115,8 +115,9 @@ class MlxVisualizer:
             ex = hubs[con.end].x
             ey = hubs[con.end].y
 
-            width = con.metadata.max_link_capacity
-            width *= (16 - (2 * con.metadata.max_link_capacity))
+            width = 5 + (5 * con.metadata.max_link_capacity)
+            if width > 75:
+                width = 75
             MlxCanvas._draw_line(
                 self.connections_layer, sx, sy, ex, ey, width, color)
 

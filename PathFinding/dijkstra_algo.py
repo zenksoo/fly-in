@@ -4,6 +4,8 @@ from enum import Enum
 from abc import ABC
 from heapq import heappush, heappop
 from functools import total_ordering
+from CExceptions import InvalidMap
+
 
 class GraphBuilder(ABC):
     @staticmethod
@@ -53,7 +55,7 @@ class PathFinding(ABC):
     connections: List[Connection]
     hubs: List[Hub] = []
     planned_routes: Dict[str, List[Step]] = {}
-    turn_changes_register: Dict[str, List[str]] = {}
+    turn_changes_register: Dict[str, List[Tuple[str, str]]] = {}
 
     @classmethod
     def _update_turns_changes(cls, steps: List[Step]) -> None:
@@ -61,14 +63,14 @@ class PathFinding(ABC):
             if step.dest.metadata.zone == ZoneTypes.restricted and step.dest != step.origin:
                 key = f"turn_{step.turn - 1}"
                 if (cls.turn_changes_register.get(key)):
-                    cls.turn_changes_register[key].append(f"{step.origin.name}-{step.dest.name}")
+                    cls.turn_changes_register[key].append((step.origin.name, f"{step.origin.name}-{step.dest.name}"))
                 else:
-                    cls.turn_changes_register[key] = [f"{step.origin.name}-{step.dest.name}"]
+                    cls.turn_changes_register[key] = [(step.origin.name, f"{step.origin.name}-{step.dest.name}")]
             key = f"turn_{step.turn}"
             if (cls.turn_changes_register.get(key)):
-                cls.turn_changes_register[key].append(step.dest.name)
+                cls.turn_changes_register[key].append((step.origin.name, step.dest.name))
             else:
-                cls.turn_changes_register[key] = [step.dest.name]
+                cls.turn_changes_register[key] = [(step.origin.name, step.dest.name)]
 
     @classmethod
     def _get_turn_changes(cls, turn: int) -> List[str]:
@@ -85,25 +87,30 @@ class PathFinding(ABC):
         return None
 
     @classmethod
-    def can_enter_hub(cls, source: Hub, dest: Hub, occupied_positions: List[str]) -> bool:
+    def can_enter_hub(cls, source: Hub, dest: Hub, occupied_positions: List[Tuple[str, str]]) -> bool:
         occupant_count = 0
+        occupant_con_count = 0
         connection: Connection | None = None
         for con in cls.connections:
             if ((con.start == source.name and con.end == dest.name) or
                 (con.start == dest.name and con.end == source.name)):
                 connection = con
 
-        for position in occupied_positions:
+        for origin, position in occupied_positions:
+            if connection:
+                if ((connection.start == origin and connection.end == position) or
+                     (connection.start == position and connection.end == origin)):
+                    occupant_con_count += 1
             if position == dest.name:
                 occupant_count += 1
 
         if connection:
-            return connection.metadata.max_link_capacity > occupant_count and dest.metadata.max_drones > occupant_count
+            return connection.metadata.max_link_capacity > occupant_con_count and dest.metadata.max_drones > occupant_count
 
         return False
 
     @classmethod
-    def can_use_connection(cls, source: Hub, dest: Hub, occupied_positions: List[str]) -> bool:
+    def can_use_connection(cls, source: Hub, dest: Hub, occupied_positions: List[Tuple[str, str]]) -> bool:
         occupant_count = 0
         connection: Connection | None = None
 
@@ -125,7 +132,6 @@ class PathFinding(ABC):
     @staticmethod
     def _reset_visited_flags(Hubs: List[Hub]) -> None:
         for hub in Hubs:
-            print(hub.name)
             hub.visited = False
 
     @classmethod
@@ -152,7 +158,12 @@ class PathFinding(ABC):
 
         while True:
             while True:
-                smallest_route: Tuple[float, List[Step]] = heappop(route_queue)
+                try:
+                    smallest_route: Tuple[float, List[Step]] = heappop(route_queue)
+                except IndexError:
+                    raise InvalidMap("Invalid map no path found from start to end.\n\n\t\
+                                     Check that the connections link them together.\
+                                     and no blocked hub between them")
 
                 cost, current_route = smallest_route
 
@@ -226,10 +237,6 @@ class PathFinding(ABC):
             cls._reset_visited_flags(cls.hubs)
             cls.planned_routes[drone_id] = PathFinding._find_route_for_drone(graph)
             cls._update_turns_changes(cls.planned_routes[drone_id])
-            print("#"*15, drone_id, "#"*15)
-            for step in cls.planned_routes[drone_id]:
-                print("turn   : ", step.turn)
-                print("Dest : ", step.dest.name)
 
         turn_number: int = 1
         moves_per_turn: List[List[str]] = []
@@ -253,12 +260,4 @@ class PathFinding(ABC):
             moves_per_turn.append(turn_moves)
             turn_number += 1
 
-        with open("result.txt", 'w') as f:
-            for route in moves_per_turn:
-                for step in route:
-                    f.write(f"{step} ")
-                f.write("\n")
-
         return moves_per_turn
-
-

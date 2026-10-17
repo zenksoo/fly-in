@@ -1,0 +1,15 @@
+nb_drones: 3
+start_hub: S 0 2
+hub: A 3 0
+hub: B 2 1
+hub: C 2 2
+hub: D 3 3
+end_hub: E 5 0
+connection: S-B
+connection: S-C
+connection: S-D
+connection: A-B
+connection: A-D
+connection: A-E
+connection: C-D
+

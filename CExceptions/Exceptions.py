@@ -48,5 +48,13 @@ class CanvasError(ProjectBaseException):
     pass
 
 
+class InvalidMap(ProjectBaseException):
+    pass
+
+
+class InvalidCliArgument(ProjectBaseException):
+    pass
+
+
 class InvalidArgument(CodeBaseException):
     pass
