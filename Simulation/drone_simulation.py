@@ -16,8 +16,6 @@ class DroneSimulation:
         if isinstance(map_data, str):
             map_data = MapParser.from_file(map_data)
 
-        self.bigest_dest: int = 0
-
         self.map_data = map_data
         self.drones: Dict[str, Drone] = {}
 
@@ -32,15 +30,6 @@ class DroneSimulation:
         self.TURNS_FINISHED: bool = False
 
         self.RUN_ANIMATION: bool = False
-
-    def _calculate_bigest_dest(self) -> None:
-        self.bigest_dest = 0
-        for drone in self.READY_TO_MOVE_DRONES:
-            sx = drone.dest_pos[0] - drone.position[0]
-            sy = drone.dest_pos[1] - drone.position[1]
-
-            if (max(abs(sx), abs(sy)) > self.bigest_dest):
-                self.bigest_dest = int(max(abs(sx), abs(sy)))
 
     def _update_moved_drones(self) -> None:
         moved_drones: List[Drone] = []
@@ -63,29 +52,26 @@ class DroneSimulation:
                 new_pos = (x, y)
             else:
                 dest_hub = self.map_data.hubs[route[1]]
-                new_pos = (dest_hub.x, dest_hub.y)
+                new_pos = (dest_hub.x + (random() * 4), dest_hub.y + (random() * 4))
                 new_hub = dest_hub
 
             if new_pos != curr_pos:
                 drone.dest_pos = new_pos
                 drone.dest_hub = new_hub
+                drone.step = self._get_vector_direction_to(drone)
 
                 moved_drones.append(drone)
 
         self.READY_TO_MOVE_DRONES = moved_drones
-        self._calculate_bigest_dest()
 
     @staticmethod
-    def _get_vector_direction_to(drone: Drone,
-                                 step: int) -> Tuple[float, float]:
+    def _get_vector_direction_to(drone: Drone) -> Tuple[float, float]:
 
         sx = drone.dest_pos[0] - drone.position[0]
         sy = drone.dest_pos[1] - drone.position[1]
 
-        # step = max(abs(sx), abs(sy))
-
-        dx = sx / 50
-        dy = sy / 50
+        dx = sx / 150
+        dy = sy / 150
 
         return (dx, dy)
 
@@ -129,13 +115,15 @@ class DroneSimulation:
         if self._drone_arrived(drone):
             return
 
-        dir = self._get_vector_direction_to(drone, self.bigest_dest)
+        dir = drone.step
         img_w = drone.mlximg.contents.width
         img_h = drone.mlximg.contents.height
 
-        new_pos_x = drone.position[0] + dir[0] * self.SPEED * (random() * 4)
-        new_pos_y = drone.position[1] + dir[1] * self.SPEED * (random() * 4)
+        new_pos_x = drone.position[0] + dir[0] * self.SPEED
+        new_pos_y = drone.position[1] + dir[1] * self.SPEED
 
+        import math
+        c = math.sqrt((new_pos_x - drone.position[0])**2 + (new_pos_y - drone.position[1])**2)
         if show_path:
             MlxCanvas._draw_line(path_layer,
                                  round(drone.position[0]),
@@ -187,6 +175,6 @@ class DroneSimulation:
                 new_content = f"TURN: 0{simulation.turn}"
             MlxCanvas._update_text(visualizer.text_layer,
                                    visualizer.turns_label, new_content)
-            time.sleep(0.5)
+
         if simulation.turn >= len(simulation.solution):
             simulation.TURNS_FINISHED = True

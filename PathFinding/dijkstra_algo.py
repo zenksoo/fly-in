@@ -46,6 +46,11 @@ class Step:
         self.dest: Hub
 
     def __lt__(self, other: "Step") -> bool:
+        if self.dest.type == HubType.end_hub:
+            return True
+
+        if other.dest.type == HubType.end_hub:
+            return False
 
         return True
 

@@ -38,7 +38,7 @@ def cli_argument_parser() -> argparse.Namespace:
         raise InvalidCliArgument("Invalid Value for --output\n\n\t\
                                  Invalid path, must be path to a file\
                                  not to a directory.")
-    return parser.parse_args()
+    return args
 
 
 class FlyIn:
@@ -49,18 +49,13 @@ class FlyIn:
 
     @classmethod
     def _generate_simulation_output(cls) -> None:
-        print("\033[42m    Solution    \033[49m\n")
         i = 1
         with open(cls.args.output, 'w') as f:
             for turn_steps in cls.simulation.solution:
                 for step in turn_steps:
                     f.write(f"{step} ")
-                    print(f"{step} ", end="")
                 f.write("\n")
-                print()
                 i += 1
-        print("\n\033[42m    TOTAL TURNS  \033[49m ",
-              len(cls.simulation.solution))
 
     @classmethod
     def _full_setup(cls) -> None:
@@ -84,11 +79,20 @@ class FlyIn:
         cls.simulation._update_moved_drones()
 
 
+def display_solution(solution_file: str) -> None:
+    with open(solution_file, 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            print(line)
+
+
 def main() -> None:
     print("\033[H\033[J")
     try:
         FlyIn.args = cli_argument_parser()
         FlyIn._full_setup()
+
+        display_solution(FlyIn.args.output)
 
         mlx.mlx_loop_hook(FlyIn.visualizer.mlx_ptr,
                           FlyIn.simulation.movement_animation,

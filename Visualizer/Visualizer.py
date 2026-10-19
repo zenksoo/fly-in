@@ -37,8 +37,14 @@ class MlxVisualizer:
         min_y = min([h.y for h in hubs])
 
         for h in hubs:
-            h.x = h.x + abs(min_x)
-            h.y = h.y + abs(min_y)
+            if (min_x < 0):
+                h.x = h.x + abs(min_x)
+            else:
+                h.x = h.x - min_x
+            if min_y < 0:
+                h.y = h.y + abs(min_y)
+            else:
+                h.y = h.y - min_y
 
         max_x = max([h.x for h in hubs])
         max_y = max([h.y for h in hubs])
@@ -49,8 +55,8 @@ class MlxVisualizer:
         height = (max_y + 2) * (80 + cfg.y_gap) - cfg.y_gap
         height = (cfg.padding_y * 2) + height
 
-        if width < 500:
-            width = 500
+        if width < 700:
+            width = 700
 
         return (width, height)
 
@@ -265,6 +271,7 @@ class MlxVisualizer:
         self.mlx_ptr = mlx.mlx_init(self.w, self.h,
                                     bytes(self.wcfg.title, "utf-8"),
                                     self.wcfg.resizing)
+
         self.bg_layer = MlxCanvas._create_layer(self.mlx_ptr, 0, 0,
                                                 BACKGROUND_LAYER)
         self.text_layer = MlxCanvas._create_layer(self.mlx_ptr, 0, 0,

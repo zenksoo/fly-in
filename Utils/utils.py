@@ -42,6 +42,7 @@ class Drone():
         self.dest_hub: Hub | None
         self.color: Colors
         self.mlximg: mlx_image_t
+        self.step: Tuple[float, float] = (0.0, 0.0)
 
 
 class HubMetaData(BaseModel):
