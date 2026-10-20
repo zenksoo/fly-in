@@ -228,7 +228,7 @@ class PathFinding(ABC):
                             step.dest = current_dest
                             step.origin = current_dest
                             heappush(route_queue,
-                                    (cost + 1, step, current_route + [step]))
+                                     (cost + 1, step, current_route + [step]))
                             neighbor.visited = False
 
                     else:

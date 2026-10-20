@@ -8,6 +8,7 @@ class MlxCanvas:
     @staticmethod
     def _pack_rgba(r: int, g: int, b: int, a: int) -> int:
         return (r << 24) | (g << 16) | (b << 8) | a
+
     @staticmethod
     def _put_pixel(img: mlx_image_t,
                    x: int, y: int,

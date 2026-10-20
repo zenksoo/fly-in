@@ -9,36 +9,40 @@ from PathFinding import PathFinding
 from Simulation import DroneSimulation
 from pathlib import Path
 
+
 CONFIG_PATH = "./config.toml"
 
 
-def cli_argument_parser() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Fly-In")
-    parser.add_argument(
-        "-m", "--map", type=str,
-        default="./Maps/custom/fly-in.txt",
-        help="path to map configuration file")
+class CLIArgParser:
+    @staticmethod
+    def _parse() -> argparse.Namespace:
+        parser = argparse.ArgumentParser(description="Fly-In")
+        parser.add_argument(
+            "-m", "--map", type=str,
+            default="./Maps/custom/fly-in.txt",
+            help="path to map configuration file")
 
-    parser.add_argument(
-        "-o", "--output", type=str,
-        default="simulation_output.txt",
-        help="path to drones routes solution file")
+        parser.add_argument(
+            "-o", "--output", type=str,
+            default="simulation_output.txt",
+            help="path to drones routes solution file")
 
-    args = parser.parse_args()
+        args = parser.parse_args()
 
-    # create path object for map and output to check it's a valid path or no
-    map_file = Path(args.map)
-    output_file = Path(args.output)
+        # create path object for map
+        # and output to check it's a valid path or no
+        map_file = Path(args.map)
+        output_file = Path(args.output)
 
-    if not map_file.is_file():
-        raise InvalidCliArgument("Invalid value for --map\n\n\t\
-                                 Invalid path, does not exist,\
-                                 or points to a directory.")
-    if output_file.is_dir():
-        raise InvalidCliArgument("Invalid Value for --output\n\n\t\
-                                 Invalid path, must be path to a file\
-                                 not to a directory.")
-    return args
+        if not map_file.is_file():
+            raise InvalidCliArgument("Invalid value for --map\n\n\t\
+                                    Invalid path, does not exist,\
+                                    or points to a directory.")
+        if output_file.is_dir():
+            raise InvalidCliArgument("Invalid Value for --output\n\n\t\
+                                    Invalid path, must be path to a file\
+                                    not to a directory.")
+        return args
 
 
 class FlyIn:
@@ -46,6 +50,13 @@ class FlyIn:
     visualizer: MlxVisualizer
     simulation: DroneSimulation
     map_data: MapParser
+
+    @staticmethod
+    def display_solution(solution_file: str) -> None:
+        with open(solution_file, 'r') as f:
+            lines = f.readlines()
+            for line in lines:
+                print(line)
 
     @classmethod
     def _generate_simulation_output(cls) -> None:
@@ -58,7 +69,8 @@ class FlyIn:
                 i += 1
 
     @classmethod
-    def _full_setup(cls) -> None:
+    def _core(cls) -> None:
+        cls.args = CLIArgParser._parse()
         cls.map_data = MapParser.from_file(cls.args.map)
 
         cls.simulation = DroneSimulation(cls.map_data)
@@ -74,35 +86,27 @@ class FlyIn:
 
         cls._generate_simulation_output()
 
+        cls.display_solution(cls.args.output)
+
         cls.visualizer._update_hub_capacity_label()
 
         cls.simulation._update_moved_drones()
 
+        mlx.mlx_loop_hook(cls.visualizer.mlx_ptr,
+                          cls.simulation.movement_animation,
+                          ctypes.cast(id(cls.visualizer), c_void_p))
 
-def display_solution(solution_file: str) -> None:
-    with open(solution_file, 'r') as f:
-        lines = f.readlines()
-        for line in lines:
-            print(line)
+        mlx.mlx_key_hook(cls.visualizer.mlx_ptr,
+                         cls.visualizer.handel_input,
+                         ctypes.cast(id(cls.visualizer), c_void_p))
+
+        mlx.mlx_loop(cls.visualizer.mlx_ptr)
 
 
 def main() -> None:
     print("\033[H\033[J")
     try:
-        FlyIn.args = cli_argument_parser()
-        FlyIn._full_setup()
-
-        display_solution(FlyIn.args.output)
-
-        mlx.mlx_loop_hook(FlyIn.visualizer.mlx_ptr,
-                          FlyIn.simulation.movement_animation,
-                          ctypes.cast(id(FlyIn.visualizer), c_void_p))
-
-        mlx.mlx_key_hook(FlyIn.visualizer.mlx_ptr,
-                         FlyIn.visualizer.handel_input,
-                         ctypes.cast(id(FlyIn.visualizer), c_void_p))
-
-        mlx.mlx_loop(FlyIn.visualizer.mlx_ptr)
+        FlyIn._core()
     except BaseException as e:
         print(e, file=stderr)
         exit(1)

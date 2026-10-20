@@ -122,8 +122,6 @@ class DroneSimulation:
         new_pos_x = drone.position[0] + dir[0] * self.SPEED
         new_pos_y = drone.position[1] + dir[1] * self.SPEED
 
-        import math
-        c = math.sqrt((new_pos_x - drone.position[0])**2 + (new_pos_y - drone.position[1])**2)
         if show_path:
             MlxCanvas._draw_line(path_layer,
                                  round(drone.position[0]),

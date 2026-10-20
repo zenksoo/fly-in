@@ -219,12 +219,16 @@ class MapParser:
                             raise MapParserError(
                                 "invalid hub name the name must not include -"
                             )
-                        elif (hub.type == HubType.start_hub and hub.type in [h.type for h in hubs.values()]):
-                            raise MapParserError("multiple start hubs defined.\n\n\t\
-                                                 The map must have exactly one start hub")
-                        elif (hub.type == HubType.end_hub and hub.type in [h.type for h in hubs.values()]):
-                            raise MapParserError("multiple end hubs defined.\n\n\t\
-                                                 The map must have exactly one end hub")
+                        elif (hub.type == HubType.start_hub and
+                              hub.type in [h.type for h in hubs.values()]):
+                            raise MapParserError(
+                                "multiple start hubs defined.\n\n\t\
+                                The map must have exactly one start hub")
+                        elif (hub.type == HubType.end_hub and
+                              hub.type in [h.type for h in hubs.values()]):
+                            raise MapParserError(
+                                "multiple end hubs defined.\n\n\t\
+                                The map must have exactly one end hub")
                         hubs[hub.name] = hub
                     else:
                         raise MapParserError(
