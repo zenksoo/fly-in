@@ -1,5 +1,5 @@
 from CExceptions import MapParserError, MetaDataParserError
-from Utils import (Hub, HubMetaData, Connection,
+from Utils import (Hub, HubMetaData, HubType, Connection,
                    ConnectionMetadata, ZoneTypes, Colors)
 from typing import List, Dict, Any
 from pydantic import ValidationError
@@ -78,7 +78,7 @@ class MapParser:
                 try:
                     metadata_dict[key] = Colors[val]
                 except KeyError:
-                    raise MapParserError(f"unregistred color '{val}'")
+                    raise MapParserError(f"Unknown color '{val}' for hub.")
             else:
                 metadata_dict[key] = int(val)
 
@@ -219,6 +219,12 @@ class MapParser:
                             raise MapParserError(
                                 "invalid hub name the name must not include -"
                             )
+                        elif (hub.type == HubType.start_hub and hub.type in [h.type for h in hubs.values()]):
+                            raise MapParserError("multiple start hubs defined.\n\n\t\
+                                                 The map must have exactly one start hub")
+                        elif (hub.type == HubType.end_hub and hub.type in [h.type for h in hubs.values()]):
+                            raise MapParserError("multiple end hubs defined.\n\n\t\
+                                                 The map must have exactly one end hub")
                         hubs[hub.name] = hub
                     else:
                         raise MapParserError(

@@ -46,10 +46,13 @@ class Step:
         self.dest: Hub
 
     def __lt__(self, other: "Step") -> bool:
+        if (self.dest.metadata.zone == ZoneTypes.priority):
+            return True
+        elif (other.dest.metadata.zone == ZoneTypes.priority):
+            return False
         if self.dest.type == HubType.end_hub:
             return True
-
-        if other.dest.type == HubType.end_hub:
+        elif other.dest.type == HubType.end_hub:
             return False
 
         return True
@@ -138,8 +141,8 @@ class PathFinding(ABC):
         occupant_count = 0
         connection: Connection | None = None
 
-        for position in occupied_positions:
-            if position == f"{source.name}-{dest.name}":
+        for source_pos, dest_pos in occupied_positions:
+            if source_pos == source.name and dest_pos == dest.name:
                 occupant_count += 1
 
         for con in cls.connections:
@@ -161,7 +164,7 @@ class PathFinding(ABC):
     @classmethod
     def _find_route_for_drone(cls, graph: Dict[str, List[Hub]]) -> List[Step]:
         # route_queue List[List[Tuple[cost, Step]]]
-        route_queue: List[Tuple[float, List[Step]]] = []
+        route_queue: List[Tuple[float, Step, List[Step]]] = []
         best_route: List[Step] = []
 
         for hub_name in graph.keys():
@@ -170,25 +173,19 @@ class PathFinding(ABC):
                 step = Step(0)
                 step.dest = hub
                 step.origin = hub
-                heappush(route_queue, (0, [step]))
+                heappush(route_queue, (0, step, [step]))
                 hub.visited = True
                 break
-
-        smallest_route: Tuple[float, List[Step]] = (0.0, [])
 
         while True:
             while True:
                 try:
-                    smallest_route = heappop(route_queue)
+                    cost, current_step, current_route = heappop(route_queue)
                 except IndexError:
                     raise InvalidMap("Invalid map no path found from start to\
                                      end.\n\n\tCheck that the connections \
                                      link them together.\
                                      and no blocked hub between them")
-
-                cost, current_route = smallest_route
-
-                current_step = current_route[-1]
 
                 current_dest: Hub = current_step.dest
                 if current_dest.type == HubType.end_hub:
@@ -206,12 +203,14 @@ class PathFinding(ABC):
                 break
 
             next_turn = current_step.turn + 1
-
             for neighbor in graph[current_dest.name]:
                 if not neighbor.visited:
                     neighbor.visited = True
                     turn_changes = cls._get_turn_changes(next_turn)
                     next_turn_changes = cls._get_turn_changes(next_turn + 1)
+
+                    # print(turn_changes)
+                    # print(next_turn_changes)
 
                     if neighbor.metadata.zone == ZoneTypes.restricted:
                         if (cls.can_use_connection(current_dest,
@@ -223,13 +222,13 @@ class PathFinding(ABC):
                             step.dest = neighbor
                             step.origin = current_dest
                             heappush(route_queue,
-                                     (cost + 2, current_route + [step]))
+                                     (cost + 2, step, current_route + [step]))
                         else:
                             step = Step(next_turn)
                             step.dest = current_dest
                             step.origin = current_dest
                             heappush(route_queue,
-                                     (cost + 1, current_route + [step]))
+                                    (cost + 1, step, current_route + [step]))
                             neighbor.visited = False
 
                     else:
@@ -239,18 +238,14 @@ class PathFinding(ABC):
                             step = Step(next_turn)
                             step.dest = neighbor
                             step.origin = current_dest
-                            if neighbor.metadata.zone == ZoneTypes.priority:
-                                heappush(route_queue,
-                                         (cost + 0.9, current_route + [step]))
-                            else:
-                                heappush(route_queue,
-                                         (cost + 1, current_route + [step]))
+                            heappush(route_queue,
+                                     (cost + 1, step, current_route + [step]))
                         else:
                             step = Step(next_turn)
                             step.dest = current_dest
                             step.origin = current_dest
                             heappush(route_queue,
-                                     (cost + 1, current_route + [step]))
+                                     (cost + 1, step, current_route + [step]))
                             neighbor.visited = False
         return best_route
 

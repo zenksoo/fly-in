@@ -1,10 +1,13 @@
 from MLX.libmlx import mlx, mlx_image_t, mlx_t
 from PIL import Image
-from Utils import pack_rgba, Colors
+from Utils import Colors
 from typing import Dict, Tuple
 
 
 class MlxCanvas:
+    @staticmethod
+    def _pack_rgba(r: int, g: int, b: int, a: int) -> int:
+        return (r << 24) | (g << 16) | (b << 8) | a
     @staticmethod
     def _put_pixel(img: mlx_image_t,
                    x: int, y: int,
@@ -103,7 +106,7 @@ class MlxCanvas:
                 if rainbow_idx >= len(rainbow_colors):
                     rainbow_idx = 0
             for png_x in range(png_w):
-                color: int = pack_rgba(
+                color: int = MlxCanvas._pack_rgba(
                     *png.getpixel((png_x, png_y)))  # type: ignore
 
                 if (replacement_color in Colors and source_color and
@@ -150,7 +153,7 @@ class MlxCanvas:
 
             for y in range(8):
                 for x in range(6):
-                    pixel_color = pack_rgba(
+                    pixel_color = MlxCanvas._pack_rgba(
                         *png.getpixel((glyph_x + x, y)))  # type: ignore
                     if (replacement_color and
                        pixel_color == (0xffffff << 8) + 0xff):

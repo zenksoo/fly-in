@@ -5,7 +5,6 @@ from typing import List, Tuple, Dict
 from Utils import Drone, HubType
 from random import random
 from Parser import MapParser
-import time
 
 
 class DroneSimulation:
@@ -52,7 +51,8 @@ class DroneSimulation:
                 new_pos = (x, y)
             else:
                 dest_hub = self.map_data.hubs[route[1]]
-                new_pos = (dest_hub.x + (random() * 4), dest_hub.y + (random() * 4))
+                new_pos = (round(dest_hub.x + (random() * 8)),
+                           round(dest_hub.y + (random() * 8)))
                 new_hub = dest_hub
 
             if new_pos != curr_pos:
@@ -79,8 +79,8 @@ class DroneSimulation:
     def _drone_arrived(drone: Drone) -> bool:
         x, y = (drone.position[0], drone.position[1])
 
-        if ((x >= drone.dest_pos[0] - 5 and x <= drone.dest_pos[0] + 5) and
-           (y >= drone.dest_pos[1] - 5 and y <= drone.dest_pos[1] + 5)):
+        if ((x >= drone.dest_pos[0] - 10 and x <= drone.dest_pos[0] + 10) and
+           (y >= drone.dest_pos[1] - 10 and y <= drone.dest_pos[1] + 10)):
             return True
         return False
 
