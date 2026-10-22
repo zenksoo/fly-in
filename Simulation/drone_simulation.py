@@ -8,6 +8,10 @@ from Parser import MapParser
 
 
 class DroneSimulation:
+    """
+        Class representing a simulation of drones in a map.
+    """
+
     max_speed = 6.0
     min_spped = 1.0
 
@@ -31,6 +35,10 @@ class DroneSimulation:
         self.RUN_ANIMATION: bool = False
 
     def _update_moved_drones(self) -> None:
+        """
+            Update the list of drones that are ready to move
+            based on the current turn's routes.
+        """
         moved_drones: List[Drone] = []
 
         self.routes = self.solution[self.turn]
@@ -66,6 +74,14 @@ class DroneSimulation:
 
     @staticmethod
     def _get_vector_direction_to(drone: Drone) -> Tuple[float, float]:
+        """ Get the vector direction from the drone's current position to its destination.
+
+        Args:
+            drone (Drone): The drone for which to calculate the direction vector.
+
+        Returns:
+            Tuple[float, float]: The direction vector (dx, dy) from the drone's current position to its destination.
+        """
 
         sx = drone.dest_pos[0] - drone.position[0]
         sy = drone.dest_pos[1] - drone.position[1]
@@ -77,6 +93,15 @@ class DroneSimulation:
 
     @staticmethod
     def _drone_arrived(drone: Drone) -> bool:
+        """ Check if the drone has arrived at its destination.
+
+        Args:
+            drone (Drone): The drone to check.
+
+        Returns:
+            bool: True if the drone has arrived at its destination, False otherwise.
+        """
+
         x, y = (drone.position[0], drone.position[1])
 
         if ((x >= drone.dest_pos[0] - 10 and x <= drone.dest_pos[0] + 10) and
@@ -85,6 +110,10 @@ class DroneSimulation:
         return False
 
     def reset_drones_position(self) -> None:
+        """
+        Reset the position of all drones to the starting hub's position
+        and update their destination to the starting hub.
+        """
         from Visualizer import MlxVisualizer
         drones = list(self.drones.values())
         hubs = list(self.map_data.hubs.values())
@@ -110,6 +139,14 @@ class DroneSimulation:
     def _move_toward(self, drone: Drone,
                      path_layer: mlx_image_t,
                      show_path: bool = False) -> None:
+        """
+            Move the drone towards its destination and update its position on the visualizer.
+
+            Args:
+                drone (Drone): The drone to move.
+                path_layer (mlx_image_t): The image layer to draw the path on.
+                show_path (bool): Whether to show the path of the drone. Defaults to False.
+        """
         from Visualizer import MlxVisualizer
 
         if self._drone_arrived(drone):
@@ -138,6 +175,15 @@ class DroneSimulation:
     @mlx_loop_hook_func
     @staticmethod
     def movement_animation(param: int) -> None:
+        """
+            Animation loop for moving drones in the simulation.
+            This function is called repeatedly by the MLX library to update the positions of drones
+            and handle the animation of their movement.
+
+            Args:
+                param (int): A pointer to the MlxVisualizer instance.
+        """
+        
         from Visualizer import MlxVisualizer
         visualizer: MlxVisualizer = ctypes.cast(param, ctypes.py_object).value
         simulation: DroneSimulation = visualizer.simulation

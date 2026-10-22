@@ -16,6 +16,15 @@ CONFIG_PATH = "./config.toml"
 class CLIArgParser:
     @staticmethod
     def _parse() -> argparse.Namespace:
+        """ Parse the command line arguments.
+
+        Raises:
+            InvalidCliArgument: If the command line arguments are invalid.
+            InvalidCliArgument: If the map file is invalid.
+
+        Returns:
+            argparse.Namespace: The parsed command line arguments.
+        """
         parser = argparse.ArgumentParser(description="Fly-In")
         parser.add_argument(
             "-m", "--map", type=str,
@@ -53,6 +62,11 @@ class FlyIn:
 
     @staticmethod
     def display_solution(solution_file: str) -> None:
+        """ Display the solution from a file.
+
+        Args:
+            solution_file (str): The path to the solution file.
+        """
         with open(solution_file, 'r') as f:
             lines = f.readlines()
             for line in lines:
@@ -60,6 +74,7 @@ class FlyIn:
 
     @classmethod
     def _generate_simulation_output(cls) -> None:
+        """ Generate the simulation output file."""
         i = 1
         with open(cls.args.output, 'w') as f:
             for turn_steps in cls.simulation.solution:
@@ -70,6 +85,11 @@ class FlyIn:
 
     @classmethod
     def _core(cls) -> None:
+        """
+            The core function of the FlyIn program.
+            It initializes the simulation, visualizer,
+            and pathfinding, and starts the MLX loop.
+        """
         cls.args = CLIArgParser._parse()
         cls.map_data = MapParser.from_file(cls.args.map)
 
@@ -103,14 +123,11 @@ class FlyIn:
         mlx.mlx_loop(cls.visualizer.mlx_ptr)
 
 
-def main() -> None:
+if __name__ == "__main__":
+    """ The main function of the FlyIn program. """
     print("\033[H\033[J")
     try:
         FlyIn._core()
     except BaseException as e:
         print(e, file=stderr)
         exit(1)
-
-
-if __name__ == "__main__":
-    main()

@@ -2,7 +2,11 @@ from enum import Enum
 from typing import Tuple
 
 
+
 class Colors(Enum):
+    """
+        Enum for different colors.
+    """
     #  Blacks
     black = (0x000000 << 8) + 0xff
     darkred = 0x000000ff
@@ -70,6 +74,9 @@ class Colors(Enum):
 
 
 class ZoneTypes(str, Enum):
+    """
+        Enum for different zone types.
+    """
     normal = "normal"
     blocked = "blocked"
     restricted = "restricted"
@@ -77,12 +84,18 @@ class ZoneTypes(str, Enum):
 
 
 class HubType(str, Enum):
+    """
+        Enum for different hub types.
+    """
     start_hub = "start_hub"
     hub = "hub"
     end_hub = "end_hub"
 
 
 class TextBox:
+    """
+        Class representing a text box with content and position.
+    """
     def __init__(self, content: str,
                  start: Tuple[int, int] = (0, 0),
                  end: Tuple[int, int] = (0, 0)) -> None:

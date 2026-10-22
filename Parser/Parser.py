@@ -9,6 +9,9 @@ import io
 
 
 class MapParser:
+    """
+        Class representing a parsed map configuration.
+    """
     def __init__(self, ndrones: int, hubs: Dict[str, Hub],
                  connections: List[Connection]) -> None:
         self.ndrones = ndrones
@@ -19,6 +22,18 @@ class MapParser:
     def _validated_mapfile(
                            map_file: str | io.TextIOWrapper
                            ) -> io.TextIOWrapper:
+        """
+            Validate the input map file and return a file object.
+
+            Args:
+                map_file (str | io.TextIOWrapper): The path to the map file or an opened file object.
+
+            Returns:
+                io.TextIOWrapper: An opened file object for the map file.
+
+            Raises:
+                MapParserError: If the map file is invalid or cannot be opened.
+        """
         file: io.TextIOWrapper
         try:
             if isinstance(map_file, str):
@@ -39,6 +54,18 @@ class MapParser:
     @staticmethod
     def _metadata_parser(metadata_for: str, data: str
                          ) -> HubMetaData | ConnectionMetadata | None:
+        """
+            Parse the metadata string for a hub or connection and return the corresponding metadata object.
+
+            Args:
+                metadata_for (str): The type of metadata to parse ('hub' or 'connection').
+                data (str): The metadata string to parse.
+
+            Returns:
+                HubMetaData | ConnectionMetadata | None: The parsed metadata object or None if no data is provided.
+
+        """
+
         if not data:
             if metadata_for == "hub":
                 return HubMetaData()
@@ -91,6 +118,18 @@ class MapParser:
 
     @staticmethod
     def _ndrones_handler(nd_match: re.Match) -> int:
+        """ Handle the parsing and validation of the number of drones from the matched regex.
+
+        Args:
+            nd_match (re.Match): The regex match object containing the number of drones.
+
+        Raises:
+            MapParserError: If the number of drones is missing or invalid.
+            MapParserError: If the number of drones is not a positive integer.
+
+        Returns:
+            int: The parsed number of drones.
+        """
         if not nd_match.group("num"):
             raise MapParserError("missing value for 'nb_drones'\n\
             \n\t'nb_drones' expects a \
@@ -105,6 +144,22 @@ class MapParser:
     @staticmethod
     def _hub_handler(hub_match: re.Match, hub_pattern: re.Pattern
                      ) -> Hub:
+        """ Handle the parsing and validation of a hub from the matched regex.
+
+        Args:
+            hub_match (re.Match): The regex match object containing the hub information.
+            hub_pattern (re.Pattern): The regex pattern used to match the hub line.
+
+        Raises:
+            MapParserError: If the hub metadata is invalid or contains unknown properties.
+            MapParserError: If the hub name is not unique or contains invalid characters.
+            MapParserError: If multiple start or end hubs are defined.
+            MapParserError: If the hub coordinates are invalid.
+
+        Returns:
+            Hub: The parsed Hub object.
+        """
+
         hub: Dict[str, Any] = hub_match.groupdict()
 
         hub["x"] = int(hub["x"])
@@ -132,6 +187,20 @@ class MapParser:
     @staticmethod
     def _connections_handler(c_match: re.Match, c_pattern: re.Pattern
                              ) -> Connection:
+        """ Handle the parsing and validation of a connection from the matched regex.
+
+        Args:
+            c_match (re.Match): The regex match object containing the connection information.
+            c_pattern (re.Pattern): The regex pattern used to match the connection line.
+
+
+        Raises:
+            MapParserError: If the connection metadata is invalid or contains unknown properties.
+            MapParserError: If the connection references unregistered hubs or connects a hub to itself.
+            MapParserError: If the connection is defined more than once.
+        Returns:
+            Connection: The parsed Connection object.
+        """
 
         connection: Dict[str, Any] = c_match.groupdict()
         try:
@@ -157,6 +226,15 @@ class MapParser:
     @classmethod
     def from_file(cls, file: str | io.TextIOWrapper
                   ) -> "MapParser":
+        """ Parse the map configuration from a file and return a MapParser object.
+
+        Args:
+            file (str | io.TextIOWrapper): The path to the map file or a file object.
+
+        Returns:
+            MapParser: The parsed MapParser object.
+        """
+    
         map_file: io.TextIOWrapper = cls._validated_mapfile(file)
 
         nd_drones: int = -1

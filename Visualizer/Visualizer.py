@@ -24,6 +24,15 @@ BANNER_LAYER = 5
 
 
 class MlxVisualizer:
+    """
+    A class to handle the visualization of the drone simulation using MLX.
+
+    Attributes:
+        mlx_ptr (mlx_t): The MLX pointer.
+        simulation (DroneSimulation): The drone simulation.
+        wcfg (WindowConfig): The window configuration.
+    """
+
     def __init__(self, config_file: str, simulation: DroneSimulation) -> None:
         self.mlx_ptr: mlx_t
         self.simulation: DroneSimulation = simulation
@@ -33,6 +42,15 @@ class MlxVisualizer:
     def _get_window_resolution(cfg: WindowConfig,
                                hubs: List[Hub]
                                ) -> Tuple[int, int]:
+        """ Calculate the window resolution based on the configuration and hub positions.
+
+        Args:
+            cfg (WindowConfig): The window configuration.
+            hubs (List[Hub]):   The list of hubs in the simulation.
+
+        Returns:
+            Tuple[int, int]: The calculated window resolution.
+        """
         min_x = min([h.x for h in hubs])
         min_y = min([h.y for h in hubs])
 
@@ -61,6 +79,7 @@ class MlxVisualizer:
         return (width, height)
 
     def render_hubs(self) -> None:
+        """ Render the hubs on the MLX window based on their types and positions."""
         for hub in self.simulation.map_data.hubs.values():
             hub_png: str = "./Assets/images/hub_normal.png"
             if hub.metadata.zone == "priority":
@@ -113,6 +132,12 @@ class MlxVisualizer:
     def render_connections(self,
                            connections: List[Connection],
                            hubs: Dict[str, Hub]) -> None:
+        """ Render the connections between hubs on the MLX window.
+        Args:
+            connections (List[Connection]): The list of connections to render.
+            hubs (Dict[str, Hub]): A dictionary of hubs with their names as keys.
+        """
+
         color = 0xC0C0C0AE
         for con in connections:
             sx = hubs[con.start].x
@@ -140,6 +165,16 @@ class MlxVisualizer:
 
     def setup_drones(self, hubs: Dict[str, Hub], n_drones: int
                      ) -> Dict[str, Drone]:
+        """ Setup the drones for the simulation, initializing their positions and graphics.
+
+        Args:
+            hubs (Dict[str, Hub]): A dictionary of hubs with their names as keys.
+            n_drones (int): The number of drones to initialize.
+
+        Returns:
+            Dict[str, Drone]: A dictionary of drones with their IDs as keys.
+        """
+
         drones: Dict[str, Drone] = {}
 
         start_hub = [
@@ -175,6 +210,15 @@ class MlxVisualizer:
         return drones
 
     def _render_footer(self, texts: List[str]) -> None:
+        """ Render the footer text on the MLX window.
+
+        Args:
+            texts (List[str]): The list of text strings to render in the footer.
+
+        Returns:
+            _type_: None
+        """
+
         x = self.wcfg.padding_x
         y = self.mlx_ptr.contents.height - int(self.wcfg.padding_y / 2)
 
@@ -220,6 +264,16 @@ class MlxVisualizer:
 
     def add_labeled_box(self, st_x: int, st_y: int, text: str
                         ) -> Dict[str, Tuple[int, int]]:
+        """ Add a labeled box to the MLX window.
+
+        Args:
+            st_x (int): The starting x-coordinate of the box.
+            st_y (int): The starting y-coordinate of the box.
+            text (str): The text to display inside the box.
+
+        Returns:
+            Dict[str, Tuple[int, int]]: A dictionary with the box's ID as the key and its position as the value.
+        """
         end_x = st_x + 6 * len(text) + 32
         end_y = st_y + 18
 
@@ -238,6 +292,11 @@ class MlxVisualizer:
                                     self.wcfg.font_color)
 
     def _update_hub_capacity_label(self) -> None:
+        """ Update the capacity label for each hub in the simulation.
+
+        Returns:
+            None
+        """
         for hub in self.simulation.map_data.hubs.values():
             hub.droneCount = 0
 
@@ -257,6 +316,16 @@ class MlxVisualizer:
     @staticmethod
     def update_drone_position(drone: Drone, shift_pos: Tuple[float, float]
                               ) -> None:
+        """ Update the position of a drone in the simulation.
+
+        Args:
+            drone (Drone): The drone to update.
+            shift_pos (Tuple[float, float]): The shift in position (x, y) to apply to the drone.
+
+        Returns:
+            None
+        """
+
         new_pos_x = drone.position[0] + shift_pos[0]
         new_pos_y = drone.position[1] + shift_pos[1]
 
@@ -264,6 +333,12 @@ class MlxVisualizer:
         drone.mlximg.contents.instances[0].y = round(new_pos_y)
 
     def init_window(self) -> None:
+        """
+            Initialize the MLX window and its
+            layers based on the simulation data
+            and window configuration.
+        """
+
         hubs = list(self.simulation.map_data.hubs.values())
 
         self.w, self.h = self._get_window_resolution(self.wcfg, hubs)
@@ -333,6 +408,9 @@ class MlxVisualizer:
         self.add_labeled_box(start_label_x, start_label_y, f"HEIGHT: {self.h}")
 
     def init_map(self) -> None:
+        """
+        Initialize the map with the simulation data.
+        """
 
         self.render_hubs()
 
@@ -353,9 +431,12 @@ class MlxVisualizer:
     @mlx_keyfunc
     @staticmethod
     def handel_input(key: mlx_key_data_t, param: int) -> None:
-        # 1 -> key pressed
-        # 0 -> key up
-        # 2 -> key down = hover
+        """ Handle keyboard input events for the MLX window.
+
+        Args:
+            key (mlx_key_data_t): The key event data containing the key code and action.
+            param (int): The parameter passed to the callback function.
+        """
 
         if key.action != 0:
             return

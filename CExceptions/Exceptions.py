@@ -2,10 +2,13 @@ import re
 
 
 class CodeBaseException(Exception):
+    """ Base exception class for the project. Provides a custom string representation that includes the exception type and traceback information. """
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
     def __str__(self) -> str:
+        """ Return a string representation of the exception, including the exception type and traceback information. """
+
 
         print(f"\033[41m\033[37m  {self.__class__.__name__}  \033[49m")
         print(f"\t{super().__str__()}")
@@ -27,6 +30,8 @@ class CodeBaseException(Exception):
 
 
 class ProjectBaseException(Exception):
+    """ Base exception class for the project. Provides a custom string representation that includes the exception type and traceback information. """
+
     def __init__(self, *args: object) -> None:
         self.msg: str = str(args[0])
 
@@ -37,24 +42,31 @@ class ProjectBaseException(Exception):
 
 
 class MapParserError(ProjectBaseException):
+    """ Exception raised when there is an error parsing a map file. """
+
     pass
 
 
 class MetaDataParserError(ProjectBaseException):
+    """ Exception raised when there is an error parsing metadata. """
     pass
 
 
 class CanvasError(ProjectBaseException):
+    """ Exception raised when there is an error related to the canvas. """
     pass
 
 
 class InvalidMap(ProjectBaseException):
+    """ Exception raised when the map is invalid. """
     pass
 
 
 class InvalidCliArgument(ProjectBaseException):
+    """ Exception raised when a command line argument is invalid. """
     pass
 
 
 class InvalidArgument(CodeBaseException):
+    """ Exception raised when an argument is invalid. """
     pass

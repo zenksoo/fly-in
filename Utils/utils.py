@@ -5,6 +5,9 @@ from MLX.libmlx import mlx_image_t
 
 
 class Drone():
+    """
+        Class representing a drone in the simulation.
+    """
     def __init__(self, id: str) -> None:
         self.id = id
         self.position: Tuple[float, float]
@@ -16,12 +19,18 @@ class Drone():
 
 
 class HubMetaData(BaseModel):
+    """
+        Class representing metadata for a hub.
+    """
     color: Colors = Colors.green
     zone: ZoneTypes = ZoneTypes.normal
     max_drones: int = Field(default=1, gt=0)
 
 
 class HUBGfx(BaseModel):
+    """
+        Class representing graphical properties for a hub.
+    """
     w: int = 0
     h: int = 0
     top_label: dict[str, Tuple[int, int]] = {
@@ -35,6 +44,9 @@ class HUBGfx(BaseModel):
 
 
 class Hub(BaseModel):
+    """
+        Class representing a hub in the simulation.
+    """
     model_config = ConfigDict(arbitrary_types_allowed=True)
     name: str
     type: HubType
@@ -48,10 +60,16 @@ class Hub(BaseModel):
 
 
 class ConnectionMetadata(BaseModel):
+    """
+        Class representing metadata for a connection between hubs.
+    """
     max_link_capacity: int = Field(default=1, gt=0)
 
 
 class Connection(BaseModel):
+    """
+        Class representing a connection between two hubs.
+    """
     start: str
     end: str
     metadata: ConnectionMetadata = ConnectionMetadata()
