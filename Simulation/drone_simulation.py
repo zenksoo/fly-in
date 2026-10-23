@@ -16,6 +16,12 @@ class DroneSimulation:
     min_spped = 1.0
 
     def __init__(self, map_data: MapParser | str) -> None:
+        """
+        Initialize the DroneSimulation with map data.
+
+        Args:
+            map_data (MapParser | str): The map data for the simulation.
+        """
         if isinstance(map_data, str):
             map_data = MapParser.from_file(map_data)
 
@@ -183,7 +189,7 @@ class DroneSimulation:
             Args:
                 param (int): A pointer to the MlxVisualizer instance.
         """
-        
+
         from Visualizer import MlxVisualizer
         visualizer: MlxVisualizer = ctypes.cast(param, ctypes.py_object).value
         simulation: DroneSimulation = visualizer.simulation

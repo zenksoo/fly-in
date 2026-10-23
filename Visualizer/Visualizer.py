@@ -34,6 +34,13 @@ class MlxVisualizer:
     """
 
     def __init__(self, config_file: str, simulation: DroneSimulation) -> None:
+        """ Initialize the MlxVisualizer with a configuration file and a drone simulation.
+
+        Args:
+            config_file (str): The path to the configuration file.
+            simulation (DroneSimulation): The drone simulation to visualize.
+        """
+
         self.mlx_ptr: mlx_t
         self.simulation: DroneSimulation = simulation
         self.wcfg: WindowConfig = WindowConfig._from_file(config_file)
@@ -238,6 +245,7 @@ class MlxVisualizer:
             break_footer = True
 
         def calculate_spacing(row: int) -> Any:
+            """ Calculate the spacing between text blocks in the footer."""
             sp = valid_width - (text_blk * row)
             return int(sp / (row + 1))
 

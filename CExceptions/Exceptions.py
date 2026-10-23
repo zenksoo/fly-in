@@ -4,6 +4,7 @@ import re
 class CodeBaseException(Exception):
     """ Base exception class for the project. Provides a custom string representation that includes the exception type and traceback information. """
     def __init__(self, *args: object) -> None:
+        """ Initialize the exception with a message and optional traceback information. """
         super().__init__(*args)
 
     def __str__(self) -> str:
@@ -33,9 +34,11 @@ class ProjectBaseException(Exception):
     """ Base exception class for the project. Provides a custom string representation that includes the exception type and traceback information. """
 
     def __init__(self, *args: object) -> None:
+        """ Initialize the exception with a message and optional traceback information. """
         self.msg: str = str(args[0])
 
     def __str__(self) -> str:
+        """ Return a string representation of the exception, including the exception type and traceback information. """
         # print("\033[H\033[J")
         error_type = f"\033[41m {self.__class__.__name__} \033[49m"
         return f"{error_type}: {re.sub(r"( +)", " ", self.msg)}"

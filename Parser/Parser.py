@@ -14,6 +14,15 @@ class MapParser:
     """
     def __init__(self, ndrones: int, hubs: Dict[str, Hub],
                  connections: List[Connection]) -> None:
+        """
+            Initialize the MapParser with the number of drones, hubs, and connections.
+
+            Args:
+                ndrones (int): The number of drones in the simulation.
+                hubs (Dict[str, Hub]): A dictionary of hub names to Hub objects.
+                connections (List[Connection]): A list of Connection objects representing the connections between hubs.
+        """
+
         self.ndrones = ndrones
         self.hubs = hubs
         self.connections = connections
@@ -234,7 +243,7 @@ class MapParser:
         Returns:
             MapParser: The parsed MapParser object.
         """
-    
+
         map_file: io.TextIOWrapper = cls._validated_mapfile(file)
 
         nd_drones: int = -1

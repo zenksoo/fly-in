@@ -14,6 +14,7 @@ CONFIG_PATH = "./config.toml"
 
 
 class CLIArgParser:
+    """ A class for parsing command line arguments for the FlyIn program. """
     @staticmethod
     def _parse() -> argparse.Namespace:
         """ Parse the command line arguments.
@@ -55,6 +56,11 @@ class CLIArgParser:
 
 
 class FlyIn:
+    """
+    The main class for the FlyIn program. It handles the initialization
+    of the simulation, visualizer, and pathfinding,
+    and starts the MLX loop.
+    """
     args: argparse.Namespace
     visualizer: MlxVisualizer
     simulation: DroneSimulation

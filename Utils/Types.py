@@ -99,6 +99,7 @@ class TextBox:
     def __init__(self, content: str,
                  start: Tuple[int, int] = (0, 0),
                  end: Tuple[int, int] = (0, 0)) -> None:
+        """ Initialize a TextBox instance."""
         self.content = content
         self.start = start
         self.end = end
