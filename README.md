@@ -4,160 +4,240 @@
 
 ## Description
 
-Fly-In is a Python graph-based system for designing and managing the movement
-of multiple drones through a connected network of hubs. The graph represents
-the operational environment: hubs are vertices with zone types, colors, and
-occupancy limits, while connections are bidirectional edges with traversal and
-capacity constraints.
+Fly-In is a Python simulation that routes a fleet of drones through a network of
+connected hubs. It parses a graph from a text map, plans a turn-by-turn route
+for every drone, writes the resulting movements to a solution file, and
+visualizes the simulation in an MLX42 window.
 
-The system coordinates a fleet from one `start_hub` to one `end_hub` while
-managing shared resources, route selection, movement costs, waiting, and
-conflicts between drones. Reaching the end hub is the simulation objective,
-but the project focuses on the broader problem of planning and scheduling many
-drones safely and efficiently across the graph. Routes are written turn by
-turn and animated in an MLX42 window.
+The project was designed for the Fly-in subject: all drones must travel from a
+unique `start_hub` to a unique `end_hub` while respecting blocked hubs, hub
+occupancy limits, connection capacities, and the extra movement cost of
+restricted hubs.
 
-The application combines four parts:
+## Features
 
-- a validated map parser;
-- a weighted graph builder and route planner;
-- a turn-based movement plan written to a text file;
-- an MLX42 visualization showing hubs, links, capacities, drones, and turns.
-
-The implementation is object-oriented and uses Pydantic models for typed map
-data. It does not use a graph library.
+- Input-map parsing and validation with Pydantic models.
+- Undirected graph construction without a third-party graph library.
+- Heap-based weighted pathfinding for each drone.
+- Turn scheduling with waiting steps when a hub or connection is unavailable.
+- Hub occupancy and connection-capacity checks.
+- Two-turn movement representation for restricted destinations.
+- MLX42 visualization of hubs, links, capacities, drone positions, and turns.
+- Keyboard controls for starting, pausing, resetting, and changing animation
+  speed.
+- Type annotations, Flake8 checks, and mypy checks through the Makefile.
 
 ## Requirements
 
-- Linux or macOS with Python 3.12 or later;
-- `uv` for dependency management;
-- a working MLX42 shared library named `libmlx42.so` on Linux or
-	`libmlx42.dylib` on macOS;
-- a graphical session supported by MLX42.
+- Linux or macOS.
+- Python 3.10 or later
+- [`uv`](https://docs.astral.sh/uv/) for dependency installation and execution.
+- A graphical session supported by MLX42.
+- Git, CMake, and a C/C++ compiler if the bundled MLX42 shared library must be
+  rebuilt.
 
-Python dependencies are declared in `pyproject.toml`: Pydantic, Pillow, NumPy,
-Flake8, and mypy. The bundled `MLX/libmlx.py` provides the ctypes bindings used
-to load MLX42.
+Python dependencies are declared in [`pyproject.toml`](pyproject.toml):
+Pydantic, Pillow, NumPy, Flake8, and mypy. The local
+[`MLX/libmlx.py`](MLX/libmlx.py) module provides the ctypes declarations used to
+load MLX42.
 
-## Installation
+## Instructions
+
+### Install dependencies
+
+Install the Python dependencies with:
 
 ```sh
 make install
 ```
 
-If MLX42 is not already installed, build the shared library with the project
-target. This requires Git, CMake, a C/C++ compiler, and the MLX42 build
-dependencies:
+This runs `uv sync` and creates or updates the project environment.
+
+The repository includes `libmlx42.so` for Linux and `libmlx42.dylib` for macOS.
+If the shared library needs to be rebuilt, run:
 
 ```sh
 make mlxlib
 make install
 ```
 
-The target builds MLX42 in `/tmp/mlx42` and moves the resulting shared library
-to the project root, where the Python binding looks for it first.
+`make mlxlib` clones MLX42 into `/tmp/mlx42`, builds it with CMake, and moves
+the resulting shared library into the repository root. If your platform or
+environment already provides a compatible MLX42 library, use that library
+instead.
 
-## Usage
+### Run the application
 
-Run the default map:
+Run the default map with:
 
 ```sh
 make run
 ```
 
-The default map is `Maps/custom/fly-in.txt`, and the default output file is
-`simulation_output.txt`.
+The default invocation reads `Maps/custom/fly-in.txt`, writes
+`simulation_output.txt`, prints the generated solution, and opens the MLX42
+window.
 
-Run another map or choose another output file:
+The entry point can also be run directly:
 
 ```sh
-uv run fly_in.py --map Maps/easy/01_linear_path.txt \
-								 --output simulation_output.txt
+uv run fly_in.py
 ```
 
-Options:
+Command-line options:
 
-| Option | Default | Meaning |
+| Option | Default | Description |
 | --- | --- | --- |
-| `-m`, `--map` | `Maps/custom/fly-in.txt` | Input map path |
-| `-o`, `--output` | `simulation_output.txt` | Route output path |
+| `-m`, `--map` | `Maps/custom/fly-in.txt` | Path to the input map |
+| `-o`, `--output` | `simulation_output.txt` | Path to the generated solution |
+| `-h`, `--help` | — | Show the command-line help |
 
-The program validates the input path, parses the map, computes the complete
-solution, prints the generated output, and opens the visualizer. Parsing and
-invalid-map errors are reported on stderr and return a non-zero exit status.
+For example:
 
-## Map Format
-
-The first line must define a positive drone count. Hubs must be declared before
-their connections, and hub names cannot contain spaces or dashes.
-
-```text
-nb_drones: 2
-start_hub: start 0 0 [color=green]
-hub: junction 1 0 [zone=priority color=yellow max_drones=2]
-end_hub: goal 2 0 [color=red]
-connection: start-junction [max_link_capacity=2]
-connection: junction-goal [max_link_capacity=2]
+```sh
+uv run fly_in.py \
+  --map Maps/easy/01_linear_path.txt \
+  --output /tmp/linear-solution.txt
 ```
 
-Supported hub types are `normal`, `blocked`, `restricted`, and `priority`.
-Normal and priority moves cost one turn; a restricted destination costs two
-turns; blocked hubs are excluded from the routing graph. `max_drones` defaults
-to `1`, and `max_link_capacity` defaults to `1`. Start and end hubs are treated
-as unlimited-capacity locations by the visualizer and route planner.
+The map path must point to an existing file. The output path may be new, but it
+must not point to a directory. Parser and command-line errors are printed to
+stderr and cause a non-zero exit status.
 
-Comments beginning with `#` and blank lines are ignored. Metadata is written as
-space-separated `key=value` pairs inside one bracketed block. In this
-implementation, `color` values must be names present in `Utils/Types.py`.
+### Development commands
 
-The parser rejects malformed lines, missing or duplicate hubs, duplicate
-connections, unknown hubs, self-connections, invalid zone types, and non-
-positive capacity values. A valid but disconnected map is reported as an
-invalid route during pathfinding.
-
-## Algorithm
-
-`GraphBuilder` creates an undirected adjacency list and removes blocked hubs.
-`PathFinding` then plans a route for each drone with a heap-based weighted
-search, using movement cost `1` for normal and priority hubs and `2` for
-restricted hubs. Priority destinations and the end hub are ordered favorably
-when route steps are compared.
-
-While routes are planned, the implementation tracks scheduled movements and
-checks hub occupancy and connection capacity. When a move is unavailable, a
-drone receives a waiting step. Restricted moves are represented as two output
-events: the connection is shown while the drone is in transit, then the
-destination hub is shown on arrival. The final plan is grouped into turn lists,
-so all movements on one line belong to the same simulation turn.
-
-Path planning is repeated once per drone. For a graph with `V` hubs and `E`
-connections, one heap search is approximately `O((V + E) log V)`; total work
-scales with the number of drones and the route scheduling checks. The planned
-routes are kept in memory and reused by both the output writer and the
-visualizer.
-
-## Output Format
-
-`simulation_output.txt` contains one line per simulation turn. Each movement is
-space-separated and uses either `D<ID>-<hub>` or `D<ID>-<origin>-<destination>`
-while a drone is crossing toward a restricted hub.
-
-For the example map above, a valid output has this shape:
-
-```text
-D1-junction D2-junction
-D1-goal D2-goal
+```sh
+make debug   # Run through Python's built-in pdb debugger
+make lint    # Run Flake8 and the configured mypy checks
+make clean   # Remove __pycache__ and .mypy_cache directories
 ```
 
-Drones that do not move during a turn are omitted. The generated file is also
-printed to the terminal before the MLX event loop starts.
+The `lint` target runs Flake8 and mypy with the subject's required options:
+`--warn-return-any`, `--warn-unused-ignores`, `--ignore-missing-imports`,
+`--disallow-untyped-defs`, and `--check-untyped-defs`. The MLX ctypes binding is
+excluded from mypy.
+
+## Map format
+
+The first non-comment line must declare a positive number of drones. Hubs must
+be declared before the connections that reference them. Hub names cannot
+contain whitespace or `-`.
+
+```text
+nb_drones:	2
+
+start_hub:	start		0 0 	[color=green]
+hub:		junction	1 0 	[zone=priority color=yellow max_drones=2]
+end_hub:	goal		2 0 	[color=red]
+
+connection:	start-junction		[max_link_capacity=2]
+connection:	junction-goal		[max_link_capacity=2]
+```
+
+### Hub declarations
+
+```text
+start_hub: <name> <x> <y> [metadata]
+hub:       <name> <x> <y> [metadata]
+end_hub:   <name> <x> <y> [metadata]
+```
+
+Coordinates are integer values. A valid map has exactly one start hub and one
+end hub. Metadata is optional and is written as space-separated `key=value`
+pairs inside one bracketed block. Supported hub metadata is:
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `zone` | `normal` | `normal`, `blocked`, `restricted`, or `priority` |
+| `color` | `green` | A color name defined by `Utils/Types.py` |
+| `max_drones` | `1` | Maximum occupancy of the hub; must be positive |
+
+Zone behavior:
+
+- `normal`: destination movement costs one turn.
+- `priority`: destination movement costs one turn and is preferred during
+  path selection.
+- `restricted`: destination movement costs two turns.
+- `blocked`: cannot be entered and is removed from the routing graph.
+
+The start hub is where every drone is initialized. The end hub accepts all
+drones in the visualizer. Regular hubs use their configured `max_drones`
+capacity.
+
+### Connections
+
+```text
+connection: <hub-name>-<hub-name> [max_link_capacity=<positive integer>]
+```
+
+Connections are bidirectional. `max_link_capacity` defaults to `1` and limits
+the number of drones using the connection at the same time. Connection
+metadata may contain only `max_link_capacity`.
+
+Blank lines and text after `#` are ignored. The parser rejects malformed
+declarations, missing or duplicate hubs, duplicate connections, unknown hubs,
+self-connections, invalid zone or color names, and non-positive capacities.
+
+## Example
+
+Using the map above with two drones, the generated solution has the following
+shape:
+
+```text
+D1-junction	D2-junction
+D1-goal		D2-goal
+```
+
+Each line represents one simulation turn. Each movement is space-separated.
+`D<ID>-<hub>` means that the drone arrived at a hub. A restricted movement is
+represented by two events:
+
+```text
+D1-junction-restricted
+D1-restricted
+```
+
+The first event shows the drone in transit on the connection; the second shows
+its arrival at the restricted hub. Drones that wait do not appear on that
+turn's output line. The output file is overwritten on each run and is also
+printed to the terminal before the graphical event loop starts.
+
+## Algorithm and implementation
+
+The main implementation is split into four stages:
+
+1. [`MapParser`](Parser/Parser.py) reads the map in declaration order,
+   validates syntax and metadata, and creates typed `Hub` and `Connection`
+   models.
+2. [`GraphBuilder`](PathFinding/dijkstra_algo.py) creates an undirected
+   adjacency list and excludes blocked hubs.
+3. [`PathFinding`](PathFinding/dijkstra_algo.py) uses a heap-based,
+   Dijkstra-style search to plan a route for each drone. Normal and priority
+   destinations add one turn; restricted destinations add two. If a movement
+   cannot currently be scheduled, the search inserts a waiting step and retries
+   the route under the updated turn state.
+4. The scheduled steps are grouped by turn and consumed by
+   [`DroneSimulation`](Simulation/drone_simulation.py), which drives both the
+   text output and the animation.
+
+The scheduler checks destination occupancy and connection occupancy before
+accepting a move. It allows drones to move simultaneously when capacities
+permit, and restricted crossings occupy a connection during transit before the
+drone reaches its destination on the following turn.
+
 
 ## Visualization
 
-The MLX42 window renders the map using the coordinates from the input file.
-Hub artwork changes with the zone type, connections show their capacities,
-labels show hub occupancy, and colored drone sprites move along the planned
-route. Configuration is read from `config.toml`.
+The graphical interface is implemented with MLX42 and configured by
+[`config.toml`](config.toml). It:
+
+- lays out hubs using the integer coordinates from the map;
+- uses different artwork for normal, blocked, restricted, and priority zones;
+- draws bidirectional connections with a width based on link capacity;
+- displays hub names, occupancy/capacity labels, and connection capacities;
+- assigns colored drone sprites and animates their planned movements;
+- optionally draws each drone's traveled path;
+- displays the current turn and animation speed.
 
 Keyboard controls:
 
@@ -165,57 +245,60 @@ Keyboard controls:
 | --- | --- |
 | `Space` | Start or pause the animation |
 | `R` | Reset all drones and the turn counter |
-| `Left` | Decrease animation speed |
-| `Right` | Increase animation speed |
-| `E` | Exit |
+| `Left` | Decrease animation speed, down to the minimum |
+| `Right` | Increase animation speed, up to the maximum |
+| `E` | Exit the window |
 
-## Project Layout
+The visualization is not only decorative: it makes occupancy, link capacity,
+waiting, restricted transit, simultaneous movement, and the final delivery
+state visible while the text solution remains available for inspection.
+
+## Project layout
 
 ```text
-fly_in.py                 CLI entry point and output generation
-Parser/                   map syntax and validation
-PathFinding/              graph construction and route planning
-Simulation/               animation state and turn progression
-Visualizer/               MLX42 window and keyboard controls
-MLX/                     ctypes bindings for MLX42
-MLXCanvas/                image, text, pixel, and drawing helpers
-Utils/                    typed domain models and enums
-CExceptions/              project-specific parser and runtime errors
-Maps/                     sample, challenge, and invalid maps
-Assets/                   fonts, hub images, drone image, and banner
-config.toml               window and layout configuration
-Makefile                  install, run, debug, clean, lint, and mlxlib tasks
+fly_in.py                 CLI entry point and simulation orchestration
+Parser/                   Map syntax and validation
+PathFinding/              Graph construction and route planning
+Simulation/               Animation state and turn progression
+Visualizer/               MLX42 window, rendering, and keyboard controls
+MLX/                      ctypes bindings for MLX42
+MLXCanvas/                Image, text, pixel, and drawing helpers
+Utils/                    Typed domain models and enums
+CExceptions/              Project-specific parser and runtime errors
+Maps/                     Easy, medium, hard, custom, and invalid examples
+Assets/                   Fonts, hub artwork, drone artwork, and banner
+config.toml               Window and layout configuration
+Makefile                  Install, run, debug, clean, lint, and mlxlib targets
+simulation_output.txt     Generated turn-by-turn solution
 ```
 
-## Development Commands
+## Sample maps
 
-```sh
-make debug     # Run through Python's debugger
-make lint      # Run Flake8 and the required mypy checks
-make clean     # Remove __pycache__ and .mypy_cache directories
-```
+The repository includes:
 
-The repository uses Python type hints throughout the application. The MLX
-binding directory is excluded from the mypy command because it is a ctypes
-foreign-function interface.
+- `Maps/easy/` for simple paths and basic capacity behavior;
+- `Maps/medium/` for dead ends, loops, and priority routing;
+- `Maps/hard/` for larger routing and capacity challenges;
+- `Maps/challenger/` for the optional `The Impossible Dream` challenge;
+- `Maps/custom/` for focused scenarios such as bottlenecks, waiting, and
+  restricted movement;
+- `Maps/invalid_maps/` for parser and connectivity error cases.
 
-## Resources and AI Usage
+## Resources
 
-The main reference is the Fly-in subject provided with this repository. Other
-useful references are the Python documentation for `argparse`, `heapq`, and
-`tomllib`, the Pydantic validation documentation, the Pillow documentation,
-and the MLX42 documentation.
+- [Python `argparse` documentation](https://docs.python.org/3/library/argparse.html) : command-line parsing.
+- [Python `heapq` documentation](https://docs.python.org/3/library/heapq.html) : priority-queue operations used by pathfinding.
+- [Python `tomllib` documentation](https://docs.python.org/3/library/tomllib.html)
+ : TOML configuration loading.
+- [Pydantic documentation](https://pydantic.dev/docs/validation/latest/get-started/) : typed data models and
+  validation.
+- [Pillow documentation](https://pillow.readthedocs.io/) : image loading and
+  conversion.
+- [MLX42 documentation](https://github.com/codam-coding-college/MLX42) | [MinilibX-42-Pyhton-Documentation](https://github.com/SaraFreitas-dev/MinilibX-42-Pyhton-Documentation/tree/main) :
+  windowing, images, input events, and rendering.
+- [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm)
+ : shortest-path algorithm background.
+- [Line Drawing Algo](https://en.wikipedia.org/wiki/Line_drawing_algorithm) : for drawing line in 2d space
+### AI usage
 
-AI was used as a review and documentation aid: to summarize the subject's
-README requirements, inspect the existing modules, organize the project
-description, and check that the usage examples match the implemented CLI and
-map syntax. The implementation and its behavior should still be verified by
-the authors with tests and peer review.
-
-## Known Scope
-
-The current application is designed around the MLX42 graphical runtime. The
-route file is generated before the window loop starts, while the visual
-animation presents that precomputed plan. No automated test suite is currently
-included in the repository; the supplied maps under `Maps/` are intended for
-manual validation together with `make lint`.
+AI assistance was used to review the subject requirements, organize this README, and explain the existing implementation.
