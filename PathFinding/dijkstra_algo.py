@@ -7,6 +7,7 @@ from CExceptions import InvalidMap
 
 
 class GraphBuilder(ABC):
+    """ A class for building graph representations. """
     @staticmethod
     def build_adjacency_list(hubs: Dict[str, Hub],
                              connections: List[Connection]
@@ -23,6 +24,7 @@ class GraphBuilder(ABC):
         """
 
         def _get_hub_by_name(hubs: List[Hub], hub_name: str) -> Hub | None:
+            """ Get a hub by its name from a list of hubs. """
             for hub in hubs:
                 if hub.name == hub_name:
                     return hub
@@ -53,6 +55,7 @@ class Step:
         Class representing a step in the pathfinding process.
     """
     def __init__(self, turn: int = 0) -> None:
+        """ Initialize a Step instance. """
         self.turn = turn
         # self.dest_name: str = name
         self.origin: Hub
