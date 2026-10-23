@@ -2,7 +2,6 @@ from enum import Enum
 from typing import Tuple
 
 
-
 class Colors(Enum):
     """
         Enum for different colors.

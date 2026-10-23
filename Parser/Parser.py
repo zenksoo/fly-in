@@ -15,12 +15,14 @@ class MapParser:
     def __init__(self, ndrones: int, hubs: Dict[str, Hub],
                  connections: List[Connection]) -> None:
         """
-            Initialize the MapParser with the number of drones, hubs, and connections.
+            Initialize the MapParser with the number of drones, hubs,
+            and connections.
 
             Args:
                 ndrones (int): The number of drones in the simulation.
-                hubs (Dict[str, Hub]): A dictionary of hub names to Hub objects.
-                connections (List[Connection]): A list of Connection objects representing the connections between hubs.
+                hubs (Dict[str, Hub]): A dictionary of hub names to Hub objects
+                connections (List[Connection]): A list of Connection objects
+                                    representing the connections between hubs.
         """
 
         self.ndrones = ndrones
@@ -35,7 +37,8 @@ class MapParser:
             Validate the input map file and return a file object.
 
             Args:
-                map_file (str | io.TextIOWrapper): The path to the map file or an opened file object.
+                map_file (str | io.TextIOWrapper): The path to the map file or
+                                                   an opened file object.
 
             Returns:
                 io.TextIOWrapper: An opened file object for the map file.
@@ -64,14 +67,17 @@ class MapParser:
     def _metadata_parser(metadata_for: str, data: str
                          ) -> HubMetaData | ConnectionMetadata | None:
         """
-            Parse the metadata string for a hub or connection and return the corresponding metadata object.
+            Parse the metadata string for a hub or connection and return the
+            corresponding metadata object.
 
             Args:
-                metadata_for (str): The type of metadata to parse ('hub' or 'connection').
+                metadata_for (str): The type of metadata to parse
+                                    ('hub' or 'connection').
                 data (str): The metadata string to parse.
 
             Returns:
-                HubMetaData | ConnectionMetadata | None: The parsed metadata object or None if no data is provided.
+                HubMetaData | ConnectionMetadata | None: The parsed metadata
+                                        object or None if no data is provided.
 
         """
 
@@ -127,10 +133,13 @@ class MapParser:
 
     @staticmethod
     def _ndrones_handler(nd_match: re.Match) -> int:
-        """ Handle the parsing and validation of the number of drones from the matched regex.
+        """
+        Handle the parsing and validation of the number of
+        drones from the matched regex.
 
         Args:
-            nd_match (re.Match): The regex match object containing the number of drones.
+            nd_match (re.Match): The regex match object containing
+            he number of drones.
 
         Raises:
             MapParserError: If the number of drones is missing or invalid.
@@ -156,12 +165,16 @@ class MapParser:
         """ Handle the parsing and validation of a hub from the matched regex.
 
         Args:
-            hub_match (re.Match): The regex match object containing the hub information.
-            hub_pattern (re.Pattern): The regex pattern used to match the hub line.
+            hub_match (re.Match): The regex match object containing
+                                  the hub information.
+            hub_pattern (re.Pattern): The regex pattern used to
+                                      match the hub line.
 
         Raises:
-            MapParserError: If the hub metadata is invalid or contains unknown properties.
-            MapParserError: If the hub name is not unique or contains invalid characters.
+            MapParserError: If the hub metadata is invalid or contains
+                            unknown properties.
+            MapParserError: If the hub name is not unique or contains
+                            invalid characters.
             MapParserError: If multiple start or end hubs are defined.
             MapParserError: If the hub coordinates are invalid.
 
@@ -196,16 +209,22 @@ class MapParser:
     @staticmethod
     def _connections_handler(c_match: re.Match, c_pattern: re.Pattern
                              ) -> Connection:
-        """ Handle the parsing and validation of a connection from the matched regex.
+        """
+        Handle the parsing and validation of a connection
+        from the matched regex.
 
         Args:
-            c_match (re.Match): The regex match object containing the connection information.
-            c_pattern (re.Pattern): The regex pattern used to match the connection line.
+            c_match (re.Match): The regex match object containing
+                                the connection information.
+            c_pattern (re.Pattern): The regex pattern used to match
+                                the connection line.
 
 
         Raises:
-            MapParserError: If the connection metadata is invalid or contains unknown properties.
-            MapParserError: If the connection references unregistered hubs or connects a hub to itself.
+            MapParserError: If the connection metadata is invalid or contains
+                            unknown properties.
+            MapParserError: If the connection references unregistered hubs or
+                            connects a hub to itself.
             MapParserError: If the connection is defined more than once.
         Returns:
             Connection: The parsed Connection object.
@@ -235,10 +254,13 @@ class MapParser:
     @classmethod
     def from_file(cls, file: str | io.TextIOWrapper
                   ) -> "MapParser":
-        """ Parse the map configuration from a file and return a MapParser object.
+        """
+        Parse the map configuration from a file and
+        return a MapParser object.
 
         Args:
-            file (str | io.TextIOWrapper): The path to the map file or a file object.
+            file (str | io.TextIOWrapper): The path to the map file
+                                            or a file object.
 
         Returns:
             MapParser: The parsed MapParser object.

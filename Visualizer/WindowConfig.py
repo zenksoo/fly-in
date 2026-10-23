@@ -44,7 +44,6 @@ class WindowConfig(BaseModel):
     padding_x: int = 64
     padding_y: int = 120
 
-
     @staticmethod
     def _from_file(file_path: str) -> "WindowConfig":
         """ Load the window configuration from a TOML file. """

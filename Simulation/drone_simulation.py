@@ -80,13 +80,17 @@ class DroneSimulation:
 
     @staticmethod
     def _get_vector_direction_to(drone: Drone) -> Tuple[float, float]:
-        """ Get the vector direction from the drone's current position to its destination.
+        """
+        Get the vector direction from the drone's
+        current position to its destination.
 
         Args:
-            drone (Drone): The drone for which to calculate the direction vector.
+            drone (Drone): The drone for which to calculate
+            the direction vector.
 
         Returns:
-            Tuple[float, float]: The direction vector (dx, dy) from the drone's current position to its destination.
+            Tuple[float, float]: The direction vector (dx, dy) from the drone's
+                                 current position to its destination.
         """
 
         sx = drone.dest_pos[0] - drone.position[0]
@@ -105,7 +109,8 @@ class DroneSimulation:
             drone (Drone): The drone to check.
 
         Returns:
-            bool: True if the drone has arrived at its destination, False otherwise.
+            bool: True if the drone has arrived at its destination,
+            False otherwise.
         """
 
         x, y = (drone.position[0], drone.position[1])
@@ -146,12 +151,14 @@ class DroneSimulation:
                      path_layer: mlx_image_t,
                      show_path: bool = False) -> None:
         """
-            Move the drone towards its destination and update its position on the visualizer.
+            Move the drone towards its destination
+            and update its position on the visualizer.
 
             Args:
                 drone (Drone): The drone to move.
                 path_layer (mlx_image_t): The image layer to draw the path on.
-                show_path (bool): Whether to show the path of the drone. Defaults to False.
+                show_path (bool): Whether to show the path of the drone.
+                Defaults to False.
         """
         from Visualizer import MlxVisualizer
 
@@ -183,7 +190,8 @@ class DroneSimulation:
     def movement_animation(param: int) -> None:
         """
             Animation loop for moving drones in the simulation.
-            This function is called repeatedly by the MLX library to update the positions of drones
+            This function is called repeatedly by the MLX library
+            to update the positions of drones
             and handle the animation of their movement.
 
             Args:

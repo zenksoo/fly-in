@@ -34,7 +34,9 @@ class MlxVisualizer:
     """
 
     def __init__(self, config_file: str, simulation: DroneSimulation) -> None:
-        """ Initialize the MlxVisualizer with a configuration file and a drone simulation.
+        """
+        Initialize the MlxVisualizer with a configuration
+        file and a drone simulation.
 
         Args:
             config_file (str): The path to the configuration file.
@@ -49,7 +51,9 @@ class MlxVisualizer:
     def _get_window_resolution(cfg: WindowConfig,
                                hubs: List[Hub]
                                ) -> Tuple[int, int]:
-        """ Calculate the window resolution based on the configuration and hub positions.
+        """
+        Calculate the window resolution based on
+        the configuration and hub positions.
 
         Args:
             cfg (WindowConfig): The window configuration.
@@ -83,10 +87,15 @@ class MlxVisualizer:
         if width < 700:
             width = 700
 
+        if height < 500:
+            height = 500
+
         return (width, height)
 
     def render_hubs(self) -> None:
-        """ Render the hubs on the MLX window based on their types and positions."""
+        """
+        Render the hubs on the MLX window based on their types and positions.
+        """
         for hub in self.simulation.map_data.hubs.values():
             hub_png: str = "./Assets/images/hub_normal.png"
             if hub.metadata.zone == "priority":
@@ -141,8 +150,8 @@ class MlxVisualizer:
                            hubs: Dict[str, Hub]) -> None:
         """ Render the connections between hubs on the MLX window.
         Args:
-            connections (List[Connection]): The list of connections to render.
-            hubs (Dict[str, Hub]): A dictionary of hubs with their names as keys.
+        connections (List[Connection]): The list of connections to render.
+        hubs (Dict[str, Hub]): A dictionary of hubs with their names as keys.
         """
 
         color = 0xC0C0C0AE
@@ -172,10 +181,13 @@ class MlxVisualizer:
 
     def setup_drones(self, hubs: Dict[str, Hub], n_drones: int
                      ) -> Dict[str, Drone]:
-        """ Setup the drones for the simulation, initializing their positions and graphics.
+        """
+        Setup the drones for the simulation,
+        initializing their positions and graphics.
 
         Args:
-            hubs (Dict[str, Hub]): A dictionary of hubs with their names as keys.
+            hubs (Dict[str, Hub]): A dictionary of hubs with their
+                                    names as keys.
             n_drones (int): The number of drones to initialize.
 
         Returns:
@@ -220,7 +232,7 @@ class MlxVisualizer:
         """ Render the footer text on the MLX window.
 
         Args:
-            texts (List[str]): The list of text strings to render in the footer.
+            texts (List[str]): The list of text strings to render in the footer
 
         Returns:
             _type_: None
@@ -280,7 +292,8 @@ class MlxVisualizer:
             text (str): The text to display inside the box.
 
         Returns:
-            Dict[str, Tuple[int, int]]: A dictionary with the box's ID as the key and its position as the value.
+            Dict[str, Tuple[int, int]]: A dictionary with the box's ID as the
+                                        key and its position as the value.
         """
         end_x = st_x + 6 * len(text) + 32
         end_y = st_y + 18
@@ -328,7 +341,8 @@ class MlxVisualizer:
 
         Args:
             drone (Drone): The drone to update.
-            shift_pos (Tuple[float, float]): The shift in position (x, y) to apply to the drone.
+            shift_pos (Tuple[float, float]): The shift in position (x, y)
+                                             to apply to the drone.
 
         Returns:
             None
@@ -442,7 +456,8 @@ class MlxVisualizer:
         """ Handle keyboard input events for the MLX window.
 
         Args:
-            key (mlx_key_data_t): The key event data containing the key code and action.
+            key (mlx_key_data_t): The key event data containing
+                                  the key code and action.
             param (int): The parameter passed to the callback function.
         """
 

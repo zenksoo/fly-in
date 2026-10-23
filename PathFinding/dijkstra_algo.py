@@ -13,14 +13,18 @@ class GraphBuilder(ABC):
                              connections: List[Connection]
                              ) -> Dict[str, List[Hub]]:
         """
-            Build an adjacency list representation of the graph based on hubs and connections.
+            Build an adjacency list representation of
+            the graph based on hubs and connections.
 
             Args:
-                hubs (Dict[str, Hub]): A dictionary of hubs with hub names as keys.
-                connections (List[Connection]): A list of connections between hubs.
+                hubs (Dict[str, Hub]): A dictionary of hubs with
+                                        hub names as keys.
+                connections (List[Connection]): A list of connections
+                                                between hubs.
 
             Returns:
-                Dict[str, List[Hub]]: An adjacency list representation of the graph.
+                Dict[str, List[Hub]]: An adjacency list representation
+                                      of the graph.
         """
 
         def _get_hub_by_name(hubs: List[Hub], hub_name: str) -> Hub | None:
@@ -63,13 +67,15 @@ class Step:
 
     def __lt__(self, other: "Step") -> bool:
         """
-            Compare two Step instances based on their destination hub's zone and type.
+            Compare two Step instances based on their destination
+            hub's zone and type.
 
             Args:
                 other (Step): The other Step instance to compare with.
 
             Returns:
-                bool: True if this Step instance is considered "less than" the other, False otherwise.
+                bool: True if this Step instance is considered "less than"
+                      the other, False otherwise.
         """
 
         if (self.dest.metadata.zone == ZoneTypes.priority):
@@ -100,7 +106,8 @@ class PathFinding(ABC):
             Update the turn changes register with the given steps.
 
             Args:
-                steps (List[Step]): A list of Step instances to update the register with.
+                steps (List[Step]): A list of Step instances to update the
+                                    register with.
         """
 
         for step in steps:
@@ -128,13 +135,15 @@ class PathFinding(ABC):
     @classmethod
     def _get_turn_changes(cls, turn: int) -> List[Tuple[str, str]]:
         """
-            Get the list of changes for a specific turn from the turn changes register.
+            Get the list of changes for a specific turn from
+            the turn changes register.
 
             Args:
                 turn (int): The turn number to get changes for.
 
             Returns:
-                List[Tuple[str, str]]: A list of tuples representing the changes for the specified turn.
+                List[Tuple[str, str]]: A list of tuples representing the
+                                    changes for the specified turn.
         """
         key = f"turn_{turn}"
         if (cls.turn_changes_register.get(key)):
@@ -163,16 +172,18 @@ class PathFinding(ABC):
                       occupied_positions: List[Tuple[str, str]]
                       ) -> bool:
         """
-            Check if a drone can enter a destination hub from a source hub based on the current occupied
-            positions and the hub's capacity.
+        Check if a drone can enter a destination hub from a source hub
+        based on the current occupied positions and the hub's capacity.
 
-            Args:
-                source (Hub): The source hub.
-                dest (Hub): The destination hub.
-                occupied_positions (List[Tuple[str, str]]): A list of tuples representing the current occupied positions.
+        Args:
+            source (Hub): The source hub.
+            dest (Hub): The destination hub.
+            occupied_positions (List[Tuple[str, str]]): A list of tuples
+                                representing the current occupied positions
 
-            Returns:
-                bool: True if the drone can enter the destination hub, False otherwise.
+        Returns:
+            bool: True if the drone can enter the destination hub,
+                    False otherwise.
         """
         occupant_count = 0
         occupant_con_count = 0
@@ -206,17 +217,19 @@ class PathFinding(ABC):
                            occupied_positions: List[Tuple[str, str]]
                            ) -> bool:
         """
-            Check if a drone can use a connection between two hubs based on the current occupied positions
+            Check if a drone can use a connection between two hubs based on the
+            current occupied positions
             and the connection's capacity.
 
             Args:
                 source (Hub): The source hub.
                 dest (Hub): The destination hub.
-                occupied_positions (List[Tuple[str, str]]): A list of tuples representing the current
+                occupied_positions (List[Tuple[str, str]]): A list of tuples
+                                                    representing the current
                     occupied positions.
 
             Returns:
-                bool: True if the drone can use the connection, False otherwise.
+                bool: True if the drone can use the connection, False otherwise
         """
         occupant_count = 0
         connection: Connection | None = None
@@ -242,7 +255,8 @@ class PathFinding(ABC):
             Reset the visited flags for all hubs in the provided list.
 
             Args:
-                Hubs (List[Hub]): A list of Hub instances to reset the visited flags for.
+                Hubs (List[Hub]): A list of Hub instances
+                                  to reset the visited flags for.
         """
 
         for hub in Hubs:
@@ -251,10 +265,12 @@ class PathFinding(ABC):
     @classmethod
     def _find_route_for_drone(cls, graph: Dict[str, List[Hub]]) -> List[Step]:
         """
-            Find the optimal route for a drone using a modified Dijkstra's algorithm.
+            Find the optimal route for a drone using a modified
+            Dijkstra's algorithm.
 
             Args:
-                graph (Dict[str, List[Hub]]): An adjacency list representation of the graph.
+                graph (Dict[str, List[Hub]]): An adjacency list representation
+                                              of the graph.
 
             Returns:
                 List[Step]: The optimal route for the drone.
@@ -351,15 +367,19 @@ class PathFinding(ABC):
                         hubs: Dict[str, Hub]
                         ) -> List[List[str]]:
         """
-            Plan the routes for all drones based on the provided connections and hubs.
+            Plan the routes for all drones based on the provided connections
+            and hubs.
 
             Args:
-                drones (Dict[str, Drone]): A dictionary of drones with drone IDs as keys.
-                connections (List[Connection]): A list of connections between hubs.
-                hubs (Dict[str, Hub]): A dictionary of hubs with hub names as keys.
+
+            drones (Dict[str, Drone]): A dictionary of drones
+                                        with drone IDs as keys.
+            connections (List[Connection]): A list of connections between hubs.
+            hubs (Dict[str, Hub]): A dictionary of hubs with hub names as keys.
 
             Returns:
-                List[List[str]]: A list of lists, where each inner list represents the moves for a single turn.
+                List[List[str]]: A list of lists, where each inner list
+                                represents the moves for a single turn.
         """
 
         cls.connections = connections

@@ -4,7 +4,6 @@ from Utils import Colors
 from typing import Dict, Tuple
 
 
-
 class MlxCanvas:
     """ A class for creating and managing a canvas in the MLX library. """
 
@@ -54,8 +53,10 @@ class MlxCanvas:
             x (int): The x-coordinate of the layer's position.
             y (int): The y-coordinate of the layer's position.
             z (int): The z-index of the layer.
-            width (int | None): The width of the layer. If None, use the MLX window width.
-            height (int | None): The height of the layer. If None, use the MLX window height.
+            width (int | None): The width of the layer. If None,
+                                use the MLX window width.
+            height (int | None): The height of the layer. If None,
+                                 use the MLX window height.
         Returns:
             mlx_image_t: The created image layer.
         """
@@ -76,7 +77,9 @@ class MlxCanvas:
 
     @staticmethod
     def _clear_image(mlx_ptr: mlx_t, img: mlx_image_t) -> mlx_image_t:
-        """ Clear an image by deleting it and creating a new one with the same dimensions and position.
+        """
+        Clear an image by deleting it and creating a new one with the same
+        dimensions and position.
 
         Args:
             mlx_ptr (mlx_t): A pointer to the MLX instance.
@@ -105,12 +108,16 @@ class MlxCanvas:
     @staticmethod
     def _fill_window_bg(img: mlx_image_t, color: int | Colors,
                         bg_point_effect: int | Colors) -> None:
-        """ Fill the entire window with a specific background color, optionally adding a point effect.
+        """
+        Fill the entire window with a specific background color, optionally
+        adding a point effect.
 
         Args:
             img (mlx_image_t): The image to fill.
-            color (int | Colors): The background color in packed RGBA format or a Colors enum.
-            bg_point_effect (int | Colors): The color for the point effect in packed RGBA format or a Colors enum.
+            color (int | Colors): The background color in packed RGBA format or
+                                  a Colors enum.
+            bg_point_effect (int | Colors): The color for the point effect in
+                                            packed RGBA format or a Colors enum
         """
 
         def _pick_color(color: Colors | int) -> int:
@@ -150,7 +157,8 @@ class MlxCanvas:
 
         Args:
             layer (mlx_image_t): The MLX image layer to draw on.
-            png (str | Image.Image): The path to the PNG file or the Image object.
+            png (str | Image.Image): The path to the PNG file
+                                     or the Image object.
             x (int): The x-coordinate of the top-left corner of the PNG.
             y (int): The y-coordinate of the top-left corner of the PNG.
             replacement_color (Colors | int): The color to replace in the PNG.
@@ -201,31 +209,40 @@ class MlxCanvas:
                    txt: str, txt_x: int, txt_y: int,
                    color: Colors | int | None = None
                    ) -> Dict[str, Tuple[int, int]]:
-        """ Draw text on an MLX image layer at a specified position with a given color.
+        """
+        Draw text on an MLX image layer at a specified position with
+        a given color.
 
         Args:
             layer (mlx_image_t): The MLX image layer to draw on.
             txt (str): The text to draw.
             txt_x (int): The x-coordinate of the top-left corner of the text.
             txt_y (int): The y-coordinate of the top-left corner of the text.
-            color (Colors | int | None): The color of the text in packed RGBA format or a Colors enum.
+            color (Colors | int | None): The color of the text in packed RGBA
+                                         format or a Colors enum.
         Returns:
-            Dict[str, Tuple[int, int]]: A dictionary containing the start and end coordinates of the drawn text.
+            Dict[str, Tuple[int, int]]: A dictionary containing the start and
+                                        end coordinates of the drawn text.
         """
 
         def draw_char(img: mlx_image_t,
                       char: str, char_idx: int,
                       layer_x: int, layer_y: int,
+
                       replacement_color: int | None) -> None:
-            """ Draw a single character on an MLX image layer at a specified position with a given color.
+            """ Draw a single character on an MLX image layer at a specified
+            position with a given color.
 
             Args:
                 img (mlx_image_t): The MLX image layer to draw on.
                 char (str): The character to draw.
                 char_idx (int): The index of the character in the text.
-                layer_x (int): The x-coordinate of the top-left corner of the character.
-                layer_y (int): The y-coordinate of the top-left corner of the character.
-                replacement_color (int | None): The color to replace the character with, if needed.
+                layer_x (int): The x-coordinate of the top-left corner
+                               of the character.
+                layer_y (int): The y-coordinate of the top-left corner
+                               of the character.
+                replacement_color (int | None): The color to replace the
+                                                character with, if needed.
             """
 
             LOWERCASE = "abcdefghijklmnopqrstuvwxyz"
@@ -278,12 +295,16 @@ class MlxCanvas:
                      start: Tuple[int, int],
                      end: Tuple[int, int]
                      ) -> None:
-        """ Delete text from an MLX image layer by clearing the pixels in the specified area.
+        """
+        Delete text from an MLX image layer by clearing the pixels in the
+        specified area.
 
         Args:
             text_layer (mlx_image_t): The MLX image layer to modify.
-            start (Tuple[int, int]): The starting coordinates (x, y) of the area to clear.
-            end (Tuple[int, int]): The ending coordinates (x, y) of the area to clear.
+            start (Tuple[int, int]): The starting coordinates (x, y)
+                                    of the area to clear.
+            end (Tuple[int, int]): The ending coordinates (x, y)
+                                    of the area to clear.
         """
 
         for y in range(start[1], end[1] + 1):
@@ -295,11 +316,14 @@ class MlxCanvas:
             layer: mlx_image_t,
             label_coord: Dict[str, Tuple[int, int]],
             new_content: str) -> None:
-        """ Update the text on an MLX image layer by deleting the old text and drawing the new text.
+        """
+        Update the text on an MLX image layer by deleting the old text and
+        drawing the new text.
 
         Args:
             layer (mlx_image_t): The MLX image layer to modify.
-            label_coord (Dict[str, Tuple[int, int]]): A dictionary containing the start and end coordinates of the old text.
+            label_coord (Dict[str, Tuple[int, int]]): A dictionary containing
+            the start and end coordinates of the old text.
             new_content (str): The new text content to draw.
         """
 
@@ -311,7 +335,9 @@ class MlxCanvas:
     def _draw_circle(layer: mlx_image_t,
                      cx: int, cy: int, r: int,
                      pixel_color: int) -> None:
-        """ Draw a filled circle on an MLX image layer at a specified position with a given radius and color.
+        """
+        Draw a filled circle on an MLX image layer at a specified position
+        with a given radius and color.
 
         Args:
             layer (mlx_image_t): The MLX image layer to draw on.
@@ -359,7 +385,9 @@ class MlxCanvas:
     def _draw_line(layer: mlx_image_t, x0: int, y0: int,
                    x1: int, y1: int, thickness: int,
                    pixel_color: int) -> None:
-        """ Draw a line on an MLX image layer from (x0, y0) to (x1, y1) with a specified thickness and color.
+        """
+        Draw a line on an MLX image layer from (x0, y0) to (x1, y1) with a
+        specified thickness and color.
 
         Args:
             layer (mlx_image_t): The MLX image layer to draw on.
